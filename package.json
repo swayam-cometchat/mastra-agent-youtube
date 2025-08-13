@@ -26,6 +26,7 @@
   },
   "dependencies": {
     "@ai-sdk/cerebras": "^0.2.16",
+    "@ai-sdk/openai": "^2.0.11",
     "@mastra/core": "^0.13.2",
     "axios": "^1.6.0",
     "cors": "^2.8.5",
@@ -34,7 +35,8 @@
     "googleapis": "^155.0.1",
     "openai": "^4.20.1",
     "sqlite3": "^5.1.7",
-    "uuid": "^9.0.1"
+    "uuid": "^9.0.1",
+    "zod": "^3.25.76"
   },
   "devDependencies": {
     "typescript": "^5.9.2"
