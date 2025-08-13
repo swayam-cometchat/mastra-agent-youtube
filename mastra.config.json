@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "AI-powered YouTube playlist transcript search agent",
   "runtime": "nodejs20",
-  "entrypoint": "src/mastra/index.js",
+  "entrypoint": "src/mastra/index.ts",
   "environment": {
     "NODE_ENV": "production",
     "PORT": 3000
