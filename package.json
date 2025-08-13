@@ -27,9 +27,6 @@
   "dependencies": {
     "@ai-sdk/cerebras": "^0.2.16",
     "@mastra/core": "^0.13.2",
-    "@mastra/libsql": "^0.13.2",
-    "@mastra/loggers": "^0.10.6",
-    "@mastra/memory": "^0.12.2",
     "axios": "^1.6.0",
     "cors": "^2.8.5",
     "dotenv": "^16.0.3",
