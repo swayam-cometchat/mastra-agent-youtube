@@ -3,17 +3,31 @@
   "version": "1.0.0",
   "description": "AI-powered YouTube playlist transcript search agent",
   "runtime": "nodejs20",
-  "entrypoint": "src/mastra/index.ts",
+  "entry": "src/mastra/index.ts",
   "environment": {
     "NODE_ENV": "production",
-    "PORT": 3000
+    "MASTRA_DEPLOYMENT": "true"
   },
-  "secrets": [
+  "env": [
     "YOUTUBE_API_KEY",
-    "OPENAI_API_KEY",
-    "MASTRA_API_KEY",
-    "NGROK_AUTH_TOKEN"
+    "OPENAI_API_KEY"
   ],
+  "build": {
+    "include": [
+      "src/**/*.ts",
+      "src/**/*.js",
+      "data/**",
+      "package.json",
+      "tsconfig.json"
+    ],
+    "exclude": [
+      "node_modules",
+      ".git",
+      "*.log",
+      "*.md",
+      "deployment/**"
+    ]
+  },
   "endpoints": [
     {
       "path": "/health",
