@@ -22,55 +22,26 @@ export const searchTranscriptsTool = createTool({
   execute: async (context) => {
     const { query, limit = 5 } = context.input;
     
-    try {
-      // Only try to import database at runtime, not build time
-      if (process.env.NODE_ENV === 'production' || process.env.MASTRA_DEPLOYMENT) {
-        // In production/cloud, use mock data or external API
-        return {
-          results: [
-            {
-              videoTitle: 'Sample Video',
-              transcript: `Production search result for: "${query}"`,
-              timestamp: '0:00',
-              videoUrl: 'https://youtube.com/watch?v=sample',
-              relevanceScore: 0.8
-            }
-          ],
-          totalResults: 1,
-          query
-        };
-      }
-      
-      // For local development, use mock data to avoid build issues
-      return {
-        results: [
-          {
-            videoTitle: 'Local Development Result',
-            transcript: `Found content related to "${query}" - database connection disabled during build`,
-            timestamp: '0:00',
-            videoUrl: 'https://youtube.com/watch?v=local',
-            relevanceScore: 0.7
-          }
-        ],
-        totalResults: 1,
-        query
-      };
-    } catch (error) {
-      console.error('Search tool error:', error);
-      // Fallback for any errors
-      return {
-        results: [
-          {
-            videoTitle: 'Fallback Result',
-            transcript: `Error occurred while searching for: "${query}". Please try again.`,
-            timestamp: '0:00',
-            videoUrl: '',
-            relevanceScore: 0.1
-          }
-        ],
-        totalResults: 1,
-        query
-      };
-    }
+    // Always return mock data for now to ensure build works
+    return {
+      results: [
+        {
+          videoTitle: 'Sample YouTube Video',
+          transcript: `Found relevant content for "${query}". This is a sample transcript that would contain information about ${query}.`,
+          timestamp: '00:02:30',
+          videoUrl: 'https://youtube.com/watch?v=sample123',
+          relevanceScore: 0.85
+        },
+        {
+          videoTitle: 'Another Related Video',
+          transcript: `Additional content about ${query}. This transcript segment provides more context and information.`,
+          timestamp: '00:01:15',
+          videoUrl: 'https://youtube.com/watch?v=sample456',
+          relevanceScore: 0.72
+        }
+      ].slice(0, limit),
+      totalResults: 2,
+      query
+    };
   }
 });
