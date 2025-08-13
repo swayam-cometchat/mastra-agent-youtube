@@ -2,10 +2,9 @@
   "name": "mastra-youtube-transcript-agent",
   "version": "1.0.0",
   "description": "Mastra-powered AI Agent for YouTube playlist transcript search and analysis",
-  "type": "module",
   "main": "src/mastra/index.ts",
   "scripts": {
-    "start": "node --loader tsx src/index.js",
+    "start": "node src/index.js",
     "search": "node search.js",
     "dev": "NODE_ENV=development mastra dev",
     "build": "mastra build",
