@@ -1,0 +1,63 @@
+{
+  "name": "youtube-transcript-agent",
+  "version": "1.0.0",
+  "description": "AI-powered YouTube playlist transcript search agent",
+  "runtime": "nodejs18",
+  "entrypoint": "src/mastra/index.js",
+  "environment": {
+    "NODE_ENV": "production",
+    "PORT": 3000
+  },
+  "secrets": [
+    "YOUTUBE_API_KEY",
+    "OPENAI_API_KEY",
+    "MASTRA_API_KEY",
+    "NGROK_AUTH_TOKEN"
+  ],
+  "endpoints": [
+    {
+      "path": "/health",
+      "method": "GET",
+      "description": "Health check endpoint"
+    },
+    {
+      "path": "/search",
+      "method": "POST",
+      "description": "Search playlist transcripts",
+      "parameters": {
+        "query": "string",
+        "playlistUrl": "string",
+        "options": "object"
+      }
+    },
+    {
+      "path": "/process-playlist",
+      "method": "POST", 
+      "description": "Process YouTube playlist",
+      "parameters": {
+        "playlistUrl": "string",
+        "options": "object"
+      }
+    },
+    {
+      "path": "/stats",
+      "method": "GET",
+      "description": "Get database statistics"
+    }
+  ],
+  "resources": {
+    "memory": "512MB",
+    "cpu": "0.5",
+    "storage": "1GB"
+  },
+  "networking": {
+    "allowExternalConnections": true,
+    "ngrokTunnel": true
+  },
+  "database": {
+    "type": "sqlite",
+    "path": "./data/transcript_vectors.db",
+    "backupEnabled": true,
+    "tunnelEnabled": true
+  }
+}

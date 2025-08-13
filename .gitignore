@@ -1,0 +1,98 @@
+# Environment variables (CRITICAL - contains API keys)
+.env
+.env.local
+.env.development
+.env.production
+.env.backup.local
+
+# Node modules
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Database files (too large for GitHub - deploy separately)
+data/
+*.db
+*.sqlite
+*.sqlite3
+
+# Build outputs
+dist/
+build/
+.next/
+.mastra/
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Logs
+logs/
+*.log
+
+# Runtime data
+pids/
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage directory used by tools like istanbul
+coverage/
+*.lcov
+
+# Dependency directories
+jspm_packages/
+
+# Optional npm cache directory
+.npm
+
+# Optional eslint cache
+.eslintcache
+
+# Temporary folders
+tmp/
+temp/
+
+# Yarn Integrity file
+.yarn-integrity
+
+# ngrok files
+*.ngrok
+ngrok.yml
+
+# Mastra generated files
+mastra.lock
+
+# Video/Audio files
+*.mp4
+*.mp3
+*.wav
+*.avi
+
+# Subtitle files
+*.vtt
+*.srt
+*.ass
+
+# Backup files
+*.bak
+*.backup
+
+# Test and debug files
+*test*.js
+*debug*.js
+fix-*.js
+process-*.js
