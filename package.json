@@ -22,7 +22,7 @@
   "author": "Swayam Debata",
   "license": "MIT",
   "engines": {
-    "node": ">=18.0.0"
+    "node": ">=20.0.0"
   },
   "dependencies": {
     "@ai-sdk/cerebras": "^0.2.16",
@@ -38,5 +38,8 @@
     "openai": "^4.20.1",
     "sqlite3": "^5.1.7",
     "uuid": "^9.0.1"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.2"
   }
 }
