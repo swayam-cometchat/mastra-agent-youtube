@@ -1,6 +1,6 @@
 import { openai } from '@ai-sdk/openai';
 import { Agent } from '@mastra/core/agent';
-import { searchTranscriptsTool } from '../tools/search-transcripts';
+import { searchTranscriptsTool } from '../tools/search-transcripts.js';
 
 export const youtubeTranscriptAgent = new Agent({
   name: 'YouTube Transcript Agent',
