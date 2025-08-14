@@ -74,7 +74,11 @@ export const searchTranscriptsTool = createTool({
         };
       }
     } catch (error) {
-      console.log('Real database search failed, using fallback:', error.message);
+      console.log('🔄 Real database search failed, using fallback data');
+      console.log('🔍 Error details:', error.message);
+      console.log('🌍 Environment:', process.env.NODE_ENV || 'unknown');
+      console.log('📁 Current working directory:', process.cwd());
+      console.log('🚀 Deployment mode:', process.env.MASTRA_DEPLOYMENT || 'false');
     }
     
     // Fallback to realistic mock data with deployment notification
@@ -110,12 +114,17 @@ export const searchTranscriptsTool = createTool({
 async function searchRealDatabase(query: string, limit: number) {
   try {
     console.log(`🔍 Attempting real database search for: "${query}"`);
+    console.log('🌍 Environment debug info:');
+    console.log('  - NODE_ENV:', process.env.NODE_ENV || 'undefined');
+    console.log('  - MASTRA_DEPLOYMENT:', process.env.MASTRA_DEPLOYMENT || 'undefined');
+    console.log('  - Current working directory:', process.cwd());
+    console.log('  - __dirname equivalent will be calculated...');
     
     // Dynamic import of the ES module
     const VectorDatabaseModule = await import('../../services/vectorDatabase.js');
     const VectorDatabase = VectorDatabaseModule.default;
     
-    console.log('📁 Database module loaded');
+    console.log('📁 Database module loaded successfully');
     
     // Get absolute path to database - try multiple locations
     const path = await import('path');
