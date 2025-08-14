@@ -1,23 +1,23 @@
 # 🚀 Mastra YouTube Transcript Agent
 
-AI-powered agent for searching through YouTube playlist transcripts with semantic search capabilities.
+AI-powered agent for searching through YouTube playlist transcripts with semantic search capabilities using a simple, reliable SQLite approach.
 
 ## ✨ Features
 
-- **🧠 AI-Powered Search**: OpenAI embeddings for 95-100% relevance semantic search
-- **📝 Real Transcripts**: Extract actual spoken content using yt-dlp
-- **🔍 Global & Playlist Search**: Search across all transcripts or target specific playlists
-- **📊 Vector Database**: SQLite database with embeddings for fast similarity search
-- **🌐 REST API**: Production-ready Express.js server with CORS support
-- **⚡ High Performance**: Local database for ultra-fast query responses
+- **🧠 AI-Powered Search**: OpenAI embeddings for semantic search with real transcript content
+- **� Real Transcripts**: 3,375+ transcript segments from Computer Science playlist
+- **� Vector Search**: SQLite database with embeddings for fast similarity search
+- **📱 Mastra Integration**: Production-ready agent deployment
+- **⚡ Simple & Reliable**: Remote database download with local caching
+- **🗜️ Optimized Storage**: Compressed database (39MB) for efficient transfer
 
 ## 🛠️ Tech Stack
 
-- **Runtime**: Node.js 18+
-- **Framework**: Express.js with CORS
+- **Agent Framework**: Mastra v0.13.2
 - **AI**: OpenAI GPT-4 + text-embedding-3-small
 - **Database**: SQLite with vector embeddings
 - **APIs**: YouTube Data API v3
+- **Hosting**: Simple Express.js file server
 - **Deployment**: Mastra Cloud ready
 
 ## 🚀 Quick Start

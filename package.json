@@ -4,8 +4,6 @@
   "description": "Mastra-powered AI Agent for YouTube playlist transcript search and analysis",
   "main": "src/mastra/index.ts",
   "scripts": {
-    "start": "node src/index.js",
-    "search": "node search.js",
     "dev": "NODE_ENV=development mastra dev",
     "build": "mastra build",
     "deploy": "mastra deploy"
@@ -29,7 +27,6 @@
   "dependencies": {
     "@ai-sdk/cerebras": "^0.2.16",
     "@ai-sdk/openai": "^1.0.0",
-    "@libsql/client": "^0.15.11",
     "@mastra/core": "^0.13.2",
     "axios": "^1.6.0",
     "cors": "^2.8.5",
