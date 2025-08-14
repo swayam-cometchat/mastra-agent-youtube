@@ -63,6 +63,22 @@ export const searchTranscriptsTool = createTool({
         setTimeout(() => reject(new Error('Database search timeout after 10 seconds')), 10000);
       });
       
+      // Try remote database first if URL is provided
+      if (process.env.DATABASE_FILE_URL) {
+        console.log('🌐 Attempting remote database download...');
+        const searchPromise = searchRemoteDatabase(query, limit);
+        const realResults = await Promise.race([searchPromise, timeoutPromise]);
+        
+        if (realResults && realResults.length > 0) {
+          return {
+            query,
+            results: realResults,
+            totalResults: realResults.length
+          };
+        }
+      }
+      
+      // Fallback to local database
       const searchPromise = searchRealDatabase(query, limit);
       const realResults = await Promise.race([searchPromise, timeoutPromise]);
       
@@ -111,6 +127,80 @@ export const searchTranscriptsTool = createTool({
 });
 
 // Function to search the real vector database
+
+// Function to download and search database from URL
+async function searchDownloadedDatabase(query: string, limit: number) {
+  try {
+    console.log(`📥 Downloading database from: ${process.env.DATABASE_FILE_URL}`);
+    
+    const fs = await import('fs');
+    const path = await import('path');
+    
+    // Create temp directory
+    const tempDir = '/tmp/mastra-db';
+    const dbPath = path.join(tempDir, 'transcript_vectors.db');
+    
+    // Check if database already exists locally
+    if (!fs.existsSync(dbPath)) {
+      console.log('🔄 Database not cached, downloading...');
+      
+      if (!fs.existsSync(tempDir)) {
+        fs.mkdirSync(tempDir, { recursive: true });
+      }
+      
+      const response = await fetch(process.env.DATABASE_FILE_URL!);
+      if (!response.ok) {
+        throw new Error(`Failed to download database: ${response.status}`);
+      }
+      
+      const buffer = await response.arrayBuffer();
+      fs.writeFileSync(dbPath, Buffer.from(buffer));
+      console.log('✅ Database downloaded successfully');
+    } else {
+      console.log('📋 Using cached database');
+    }
+    
+    // Now use the downloaded database
+    const VectorDatabaseModule = await import('../../services/vectorDatabase.js');
+    const VectorDatabase = VectorDatabaseModule.default;
+    const db = new VectorDatabase(dbPath);
+    
+    // Wait for initialization
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
+    // Search the database
+    const searchResults = await db.searchTranscripts(query, limit);
+    
+    if (!searchResults || searchResults.length === 0) {
+      throw new Error('No results found');
+    }
+    
+    // Format results
+    const formattedResults = searchResults.map((result: any) => {
+      const firstSegment = result.matchingSegments?.[0];
+      return {
+        videoTitle: result.video?.title || 'Unknown Video',
+        transcript: firstSegment?.text || result.video?.title || '',
+        timestamp: formatTime(firstSegment?.timestamp || 0),
+        videoUrl: result.video?.url || 'https://youtube.com/watch?v=unknown',
+        relevanceScore: Math.min(result.relevanceScore || 0.5, 1.0)
+      };
+    });
+    
+    // Close database
+    if (db.close) {
+      await db.close();
+    }
+    
+    return formattedResults.slice(0, limit);
+    
+  } catch (error) {
+    console.log('❌ Downloaded database search failed:', error.message);
+    throw error;
+  }
+}
+
+// Function to search the real vector database
 async function searchRealDatabase(query: string, limit: number) {
   try {
     console.log(`🔍 Attempting real database search for: "${query}"`);
@@ -118,7 +208,21 @@ async function searchRealDatabase(query: string, limit: number) {
     console.log('  - NODE_ENV:', process.env.NODE_ENV || 'undefined');
     console.log('  - MASTRA_DEPLOYMENT:', process.env.MASTRA_DEPLOYMENT || 'undefined');
     console.log('  - Current working directory:', process.cwd());
-    console.log('  - __dirname equivalent will be calculated...');
+    console.log('  - DATABASE_URL:', process.env.DATABASE_URL ? 'Set' : 'Not set');
+    
+    // Check if we have a remote database URL
+    if (process.env.DATABASE_URL) {
+      console.log('🌐 Using remote database URL');
+      return await searchRemoteDatabase(query, limit);
+    }
+    
+    // Check if we have a database file URL to download
+    if (process.env.DATABASE_FILE_URL) {
+      console.log('📥 Downloading database from URL');
+      return await searchDownloadedDatabase(query, limit);
+    }
+    
+    console.log('📁 Using local database file');
     
     // Dynamic import of the ES module
     const VectorDatabaseModule = await import('../../services/vectorDatabase.js');
@@ -135,9 +239,13 @@ async function searchRealDatabase(query: string, limit: number) {
     
     // Try different possible paths for database
     const possiblePaths = [
-      path.resolve(__dirname, '../../../data/transcript_vectors.db'), // development
+      path.resolve(__dirname, '../../../data/test_small.db'), // TEST: small database
+      path.resolve(__dirname, '../../../data/transcript_vectors.db'), // development  
+      path.resolve(process.cwd(), 'data/test_small.db'), // TEST: deployment small
       path.resolve(process.cwd(), 'data/transcript_vectors.db'), // deployment root
+      path.resolve(__dirname, './data/test_small.db'), // TEST: relative small
       path.resolve(__dirname, './data/transcript_vectors.db'), // relative to build
+      './data/test_small.db', // TEST: fallback small
       './data/transcript_vectors.db' // fallback relative path
     ];
     
@@ -433,4 +541,98 @@ function generateRealisticResults(query: string, limit: number) {
   }
 
   return results.slice(0, limit);
+}
+
+// Function to search database from remote URL (ngrok, etc.)
+async function searchRemoteDatabase(query: string, limit: number) {
+  try {
+    const databaseUrl = process.env.DATABASE_FILE_URL;
+    if (!databaseUrl) {
+      throw new Error('DATABASE_FILE_URL not provided');
+    }
+    
+    console.log(`🌐 Downloading database from: ${databaseUrl}`);
+    
+    // Download the database file
+    const response = await fetch(databaseUrl);
+    if (!response.ok) {
+      throw new Error(`Failed to download database: ${response.status}`);
+    }
+    
+    const fs = require('fs');
+    const path = require('path');
+    const os = require('os');
+    
+    // Save to temporary file
+    const tempDir = os.tmpdir();
+    const tempDbPath = path.join(tempDir, 'remote_transcript_vectors.db');
+    
+    const arrayBuffer = await response.arrayBuffer();
+    const buffer = Buffer.from(arrayBuffer);
+    fs.writeFileSync(tempDbPath, buffer);
+    
+    console.log(`💾 Database downloaded to: ${tempDbPath}`);
+    console.log(`📊 Database size: ${(buffer.length / 1024 / 1024).toFixed(2)}MB`);
+    
+    // Import database module and search
+    const VectorDatabaseModule = await import('../../services/vectorDatabase.js');
+    const VectorDatabase = VectorDatabaseModule.default;
+    
+    const db = new VectorDatabase(tempDbPath);
+    
+    // Wait for initialization
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    // Test database
+    const testQuery = new Promise((resolve, reject) => {
+      db.db.get("SELECT COUNT(*) as count FROM transcript_segments", (err: any, row: any) => {
+        if (err) {
+          reject(err);
+        } else {
+          console.log(`🎯 Remote database has ${row?.count || 0} transcript segments`);
+          resolve(row);
+        }
+      });
+    });
+    
+    await testQuery;
+    
+    // Search the database
+    const searchResults = await db.searchTranscripts(query, limit);
+    
+    if (!searchResults || searchResults.length === 0) {
+      throw new Error('No results found in remote database');
+    }
+    
+    // Format results
+    const formattedResults = searchResults.map((result: any) => {
+      const firstSegment = result.matchingSegments?.[0];
+      return {
+        videoTitle: result.video?.title || 'Unknown Video',
+        transcript: firstSegment?.text || result.video?.title || '',
+        timestamp: formatTime(firstSegment?.timestamp || 0),
+        videoUrl: result.video?.url || 'https://youtube.com/watch?v=unknown',
+        relevanceScore: Math.min(result.relevanceScore || 0.5, 1.0)
+      };
+    });
+    
+    // Clean up temp file
+    try {
+      fs.unlinkSync(tempDbPath);
+    } catch (e) {
+      console.log('⚠️ Could not clean up temp file:', e);
+    }
+    
+    // Close database
+    if (db.close) {
+      await db.close();
+    }
+    
+    console.log(`✅ Remote database search successful: ${formattedResults.length} results`);
+    return formattedResults.slice(0, limit);
+    
+  } catch (error) {
+    console.log('❌ Remote database search failed:', error.message);
+    throw error;
+  }
 }
