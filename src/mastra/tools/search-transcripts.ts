@@ -117,21 +117,37 @@ async function searchRealDatabase(query: string, limit: number) {
     
     console.log('📁 Database module loaded');
     
-    // Get absolute path to database
+    // Get absolute path to database - try multiple locations
     const path = await import('path');
     const { fileURLToPath } = await import('url');
     const fs = await import('fs');
     const __filename = fileURLToPath(import.meta.url);
     const __dirname = path.dirname(__filename);
-    const dbPath = path.resolve(__dirname, '../../../data/transcript_vectors.db');
     
-    console.log(`📂 Database path: ${dbPath}`);
+    // Try different possible paths for database
+    const possiblePaths = [
+      path.resolve(__dirname, '../../../data/transcript_vectors.db'), // development
+      path.resolve(process.cwd(), 'data/transcript_vectors.db'), // deployment root
+      path.resolve(__dirname, './data/transcript_vectors.db'), // relative to build
+      './data/transcript_vectors.db' // fallback relative path
+    ];
     
-    // Check if database file exists
-    if (!fs.existsSync(dbPath)) {
-      console.log('⚠️ Database file not found at:', dbPath);
+    let dbPath = '';
+    for (const testPath of possiblePaths) {
+      console.log(`🔍 Checking database path: ${testPath}`);
+      if (fs.existsSync(testPath)) {
+        dbPath = testPath;
+        console.log(`✅ Found database at: ${dbPath}`);
+        break;
+      }
+    }
+    
+    if (!dbPath) {
+      console.log('⚠️ Database file not found at any of the expected locations:', possiblePaths);
       throw new Error('Database file not found - using fallback data');
     }
+    
+    console.log(`📂 Using database path: ${dbPath}`);
     
     // Create database instance with explicit path
     const db = new VectorDatabase(dbPath);

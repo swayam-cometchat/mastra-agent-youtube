@@ -1,7 +1,7 @@
 #!/bin/bash
 
-echo "🚀 Deploying YouTube Transcript Agent to Mastra"
-echo "=============================================="
+echo "🚀 Building and Preparing YouTube Transcript Agent for Deployment"
+echo "==============================================================="
 
 # Check if required environment variables are set
 if [ -z "$YOUTUBE_API_KEY" ] || [ -z "$OPENAI_API_KEY" ]; then
@@ -38,44 +38,27 @@ if [ ! -f "mastra.config.json" ]; then
     exit 1
 fi
 
-# Test local API before deployment
-echo "🧪 Testing local API..."
-node src/mastra-agent.js &
-SERVER_PID=$!
-sleep 3
+# Build with database inclusion
+echo "🚀 Building Mastra project..."
+mastra build
 
-# Health check
-HEALTH_RESPONSE=$(curl -s http://localhost:3000/health)
-if [[ $HEALTH_RESPONSE == *"healthy"* ]]; then
-    echo "✅ Local API health check passed"
-else
-    echo "❌ Local API health check failed"
-    kill $SERVER_PID 2>/dev/null
-    exit 1
-fi
+echo "📁 Copying database file to build output..."
+mkdir -p .mastra/output/data
+cp data/transcript_vectors.db .mastra/output/data/
 
-# Stop test server
-kill $SERVER_PID 2>/dev/null
-sleep 1
-
-# Deploy to Mastra
-echo "🚀 Deploying to Mastra..."
-mastra deploy
-
-# Check deployment status
-echo "📊 Checking deployment status..."
-mastra status
+echo "✅ Build completed with database included!"
+echo "� Output directory: .mastra/output/"
+echo "💾 Database size: $(ls -lh .mastra/output/data/transcript_vectors.db | awk '{print $5}')"
 
 echo ""
-echo "🎉 Deployment Complete!"
+echo "🎉 Build Complete!"
 echo "======================================"
-echo "📡 API Endpoints:"
-echo "   Health: GET /health"
-echo "   Search: POST /search"
-echo "   Process: POST /process-playlist"
-echo "   Stats: GET /stats"
+echo "🌐 Ready for deployment!"
+echo "The .mastra/output directory contains all files needed for deployment."
 echo ""
-echo "📚 API Documentation: ./API_DOCUMENTATION.md"
-echo "🔗 Mastra Dashboard: https://dashboard.mastra.ai"
+echo "Next steps:"
+echo "1. Deploy the contents of .mastra/output/ to your platform"
+echo "2. Ensure the data/ directory is included in the deployment"
+echo "3. Test the agent with queries like 'interoperability' or 'algorithms'"
 echo ""
-echo "✅ YouTube Transcript Agent is now live!"
+echo "✅ YouTube Transcript Agent build ready!"
