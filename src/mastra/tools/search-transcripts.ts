@@ -559,9 +559,9 @@ async function searchRemoteDatabase(query: string, limit: number) {
       throw new Error(`Failed to download database: ${response.status}`);
     }
     
-    const fs = require('fs');
-    const path = require('path');
-    const os = require('os');
+    const fs = await import('fs');
+    const path = await import('path');
+    const os = await import('os');
     
     // Save to temporary file
     const tempDir = os.tmpdir();
