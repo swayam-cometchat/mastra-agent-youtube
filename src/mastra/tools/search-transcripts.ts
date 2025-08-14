@@ -565,26 +565,46 @@ async function searchRemoteDatabase(query: string, limit: number) {
     
     // Save to temporary file
     const tempDir = os.tmpdir();
-    const tempDbPath = path.join(tempDir, 'remote_transcript_vectors.db');
+    const isCompressed = databaseUrl.includes('.gz');
+    const tempDbPath = path.join(tempDir, isCompressed ? 'remote_transcript_vectors.db.gz' : 'remote_transcript_vectors.db');
+    const finalDbPath = path.join(tempDir, 'remote_transcript_vectors.db');
     
     const arrayBuffer = await response.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
     fs.writeFileSync(tempDbPath, buffer);
     
     console.log(`💾 Database downloaded to: ${tempDbPath}`);
-    console.log(`📊 Database size: ${(buffer.length / 1024 / 1024).toFixed(2)}MB`);
+    console.log(`📊 Downloaded size: ${(buffer.length / 1024 / 1024).toFixed(2)}MB`);
+    
+    // Decompress if needed
+    if (isCompressed) {
+      console.log('📦 Decompressing database...');
+      const zlib = await import('zlib');
+      const compressedData = fs.readFileSync(tempDbPath);
+      const decompressedData = zlib.gunzipSync(compressedData);
+      fs.writeFileSync(finalDbPath, decompressedData);
+      console.log(`✅ Decompressed to: ${finalDbPath}`);
+      
+      // Clean up compressed file
+      fs.unlinkSync(tempDbPath);
+    }
     
     // Import database module and search
     const VectorDatabaseModule = await import('../../services/vectorDatabase.js');
     const VectorDatabase = VectorDatabaseModule.default;
     
-    const db = new VectorDatabase(tempDbPath);
+    const db = new VectorDatabase(finalDbPath);
     
     // Wait for initialization
     await new Promise(resolve => setTimeout(resolve, 1000));
     
     // Test database
     const testQuery = new Promise((resolve, reject) => {
+      if (!db.db) {
+        reject(new Error('Database connection not initialized'));
+        return;
+      }
+      
       db.db.get("SELECT COUNT(*) as count FROM transcript_segments", (err: any, row: any) => {
         if (err) {
           reject(err);
@@ -618,7 +638,7 @@ async function searchRemoteDatabase(query: string, limit: number) {
     
     // Clean up temp file
     try {
-      fs.unlinkSync(tempDbPath);
+      fs.unlinkSync(finalDbPath);
     } catch (e) {
       console.log('⚠️ Could not clean up temp file:', e);
     }
