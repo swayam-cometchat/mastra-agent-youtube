@@ -63,13 +63,13 @@ export const searchTranscriptsTool = createTool({
         setTimeout(() => reject(new Error('Database search timeout after 10 seconds')), 10000);
       });
       
-      // Try remote database first if URL is provided
+      // 1. Try remote database download if URL is provided (our simple approach)
       if (process.env.DATABASE_FILE_URL) {
         console.log('🌐 Attempting remote database download...');
         const searchPromise = searchRemoteDatabase(query, limit);
-        const realResults = await Promise.race([searchPromise, timeoutPromise]);
+        const realResults = await Promise.race([searchPromise, timeoutPromise]) as any[];
         
-        if (realResults && realResults.length > 0) {
+        if (realResults && Array.isArray(realResults) && realResults.length > 0) {
           return {
             query,
             results: realResults,
@@ -78,15 +78,15 @@ export const searchTranscriptsTool = createTool({
         }
       }
       
-      // Fallback to local database
-      const searchPromise = searchRealDatabase(query, limit);
-      const realResults = await Promise.race([searchPromise, timeoutPromise]);
+      // 2. Fallback to local database
+      const searchPromise2 = searchRealDatabase(query, limit);
+      const realResults2 = await Promise.race([searchPromise2, timeoutPromise]);
       
-      if (realResults && realResults.length > 0) {
+      if (realResults2 && realResults2.length > 0) {
         return {
           query,
-          results: realResults,
-          totalResults: realResults.length
+          results: realResults2,
+          totalResults: realResults2.length
         };
       }
     } catch (error) {

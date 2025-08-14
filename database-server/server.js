@@ -3,7 +3,7 @@ const path = require('path');
 const compression = require('compression');
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3002;
 
 // Enable gzip compression
 app.use(compression());
@@ -27,10 +27,14 @@ app.get('/health', (req, res) => {
 // Database endpoint
 app.get('/database', (req, res) => {
   const dbPath = path.join(__dirname, 'data', 'transcript_vectors.db.gz');
+  console.log('Database download requested, path:', dbPath);
+  console.log('File exists:', require('fs').existsSync(dbPath));
   res.download(dbPath, 'transcript_vectors.db.gz', (err) => {
     if (err) {
       console.error('Download error:', err);
       res.status(404).json({ error: 'Database file not found' });
+    } else {
+      console.log('Download completed successfully');
     }
   });
 });
@@ -50,4 +54,5 @@ app.get('/', (req, res) => {
 app.listen(PORT, () => {
   console.log(`Database server running on port ${PORT}`);
   console.log(`Database available at: http://localhost:${PORT}/database`);
+  console.log(`Direct access at: http://localhost:${PORT}/data/transcript_vectors.db.gz`);
 });
