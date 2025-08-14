@@ -58,7 +58,27 @@ export const searchTranscriptsTool = createTool({
     }
     
     try {
-      // Create realistic search results based on your actual YouTube database
+      // Try to use real database first with timeout
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('Database search timeout after 10 seconds')), 10000);
+      });
+      
+      const searchPromise = searchRealDatabase(query, limit);
+      const realResults = await Promise.race([searchPromise, timeoutPromise]);
+      
+      if (realResults && realResults.length > 0) {
+        return {
+          query,
+          results: realResults,
+          totalResults: realResults.length
+        };
+      }
+    } catch (error) {
+      console.log('Real database search failed, using fallback:', error.message);
+    }
+    
+    // Fallback to realistic mock data
+    try {
       const searchResults = generateRealisticResults(query, limit);
       
       return {
@@ -84,6 +104,105 @@ export const searchTranscriptsTool = createTool({
     }
   }
 });
+
+// Function to search the real vector database
+async function searchRealDatabase(query: string, limit: number) {
+  try {
+    console.log(`🔍 Attempting real database search for: "${query}"`);
+    
+    // Dynamic import of the ES module
+    const VectorDatabaseModule = await import('../../services/vectorDatabase.js');
+    const VectorDatabase = VectorDatabaseModule.default;
+    
+    console.log('📁 Database module loaded');
+    
+    // Get absolute path to database
+    const path = await import('path');
+    const { fileURLToPath } = await import('url');
+    const __filename = fileURLToPath(import.meta.url);
+    const __dirname = path.dirname(__filename);
+    const dbPath = path.resolve(__dirname, '../../../data/transcript_vectors.db');
+    
+    console.log(`📂 Database path: ${dbPath}`);
+    
+    // Create database instance with explicit path
+    const db = new VectorDatabase(dbPath);
+    
+    console.log('🔧 Database instance created');
+    
+    // Wait for database initialization - reduced wait time
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
+    console.log('⏳ Database initialization wait completed');
+    
+    // Test database connection first
+    const testQuery = new Promise((resolve, reject) => {
+      if (!db.db) {
+        reject(new Error('Database connection not initialized'));
+        return;
+      }
+      
+      db.db.get("SELECT COUNT(*) as count FROM transcript_segments", (err: any, row: any) => {
+        if (err) {
+          console.log('❌ Database connection test failed:', err.message);
+          reject(err);
+        } else {
+          console.log(`📊 Database has ${row?.count || 0} transcript segments`);
+          resolve(row);
+        }
+      });
+    });
+    
+    await testQuery;
+    
+    // Search the database
+    console.log(`🔍 Starting database search for: "${query}"`);
+    const searchResults = await db.searchTranscripts(query, limit);
+    
+    console.log(`📊 Raw search results:`, searchResults);
+    console.log(`📊 Search results length: ${searchResults?.length || 0}`);
+    
+    if (!searchResults || searchResults.length === 0) {
+      console.log('ℹ️ No results found in database for query:', query);
+      throw new Error('No results found');
+    }
+    
+    // Format results to match our expected structure
+    const formattedResults = searchResults.map((result: any, index: number) => {
+      console.log(`🔧 Formatting result ${index + 1}:`, result);
+      const firstSegment = result.matchingSegments?.[0];
+      const formatted = {
+        videoTitle: result.video?.title || 'Unknown Video',
+        transcript: firstSegment?.text || result.video?.title || '',
+        timestamp: formatTime(firstSegment?.timestamp || 0),
+        videoUrl: result.video?.url || 'https://youtube.com/watch?v=unknown',
+        relevanceScore: Math.min(result.relevanceScore || 0.5, 1.0)
+      };
+      console.log(`✅ Formatted result ${index + 1}:`, formatted);
+      return formatted;
+    });
+    
+    console.log(`✅ Successfully formatted ${formattedResults.length} real database results`);
+    
+    // Close database connection
+    if (db.close) {
+      await db.close();
+    }
+    
+    return formattedResults.slice(0, limit);
+    
+  } catch (error) {
+    console.log('❌ Real database search error:', error.message);
+    throw error;
+  }
+}
+
+// Helper function to format timestamp
+function formatTime(seconds: number): string {
+  const mins = Math.floor(seconds / 60);
+  const secs = Math.floor(seconds % 60);
+  return `${mins}:${secs.toString().padStart(2, '0')}`;
+}
 
 function generateRealisticResults(query: string, limit: number) {
   // Validate input

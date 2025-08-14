@@ -1,6 +1,12 @@
-const sqlite3 = require('sqlite3').verbose();
-const { v4: uuidv4 } = require('uuid');
-const path = require('path');
+import sqlite3 from 'sqlite3';
+import { v4 as uuidv4 } from 'uuid';
+import path from 'path';
+import fs from 'fs';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 class VectorDatabase {
   constructor(dbPath = './data/transcript_vectors.db') {
@@ -16,7 +22,6 @@ class VectorDatabase {
     return new Promise((resolve, reject) => {
       // Ensure data directory exists
       const dbDir = path.dirname(this.dbPath);
-      const fs = require('fs');
       if (!fs.existsSync(dbDir)) {
         try {
           fs.mkdirSync(dbDir, { recursive: true });
@@ -526,4 +531,4 @@ class VectorDatabase {
   }
 }
 
-module.exports = VectorDatabase;
+export default VectorDatabase;
