@@ -19,8 +19,43 @@ export const searchTranscriptsTool = createTool({
     totalResults: z.number(),
     query: z.string()
   }),
-  execute: async (context) => {
-    const { query, limit = 3 } = context.input;
+  execute: async (params) => {
+    // Extract query and limit from parameters
+    let query, limit = 3;
+    
+    // Based on Mastra's parameter structure, the actual parameters are in params.context
+    if (params && params.context) {
+      query = params.context.query;
+      limit = params.context.limit || 3;
+    } else if (params && typeof params === 'object') {
+      if (params.query) {
+        query = params.query;
+        limit = params.limit || 3;
+      } else if (params.input && params.input.query) {
+        query = params.input.query;
+        limit = params.input.limit || 3;
+      } else if (params.args && params.args.query) {
+        query = params.args.query;
+        limit = params.args.limit || 3;
+      }
+    } else if (typeof params === 'string') {
+      query = params;
+    }
+    
+    // Validate query
+    if (!query || query === 'undefined' || typeof query !== 'string') {
+      return {
+        query: 'invalid',
+        results: [{
+          videoTitle: "Search Error",
+          transcript: "Invalid search query received. Please try again with a valid search term.",
+          timestamp: "00:00",
+          videoUrl: "https://youtube.com/watch?v=error",
+          relevanceScore: 0
+        }],
+        totalResults: 1
+      };
+    }
     
     try {
       // Create realistic search results based on your actual YouTube database
@@ -36,15 +71,26 @@ export const searchTranscriptsTool = createTool({
       
       // Return empty results on error
       return {
-        query,
-        results: [],
-        totalResults: 0
+        query: query || 'error',
+        results: [{
+          videoTitle: "Search Error",
+          transcript: `Error occurred while searching for "${query}": ${error.message}`,
+          timestamp: "00:00",
+          videoUrl: "https://youtube.com/watch?v=error",
+          relevanceScore: 0
+        }],
+        totalResults: 1
       };
     }
   }
 });
 
 function generateRealisticResults(query: string, limit: number) {
+  // Validate input
+  if (!query || typeof query !== 'string') {
+    throw new Error(`Invalid query: ${query}`);
+  }
+  
   // Define the result type
   type SearchResult = {
     videoTitle: string;
