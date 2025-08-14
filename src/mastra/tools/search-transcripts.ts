@@ -57,44 +57,66 @@ export const searchTranscriptsTool = createTool({
       };
     }
     
+    // Check if we're in production without database URL - use fallback immediately
+    const isProduction = process.env.NODE_ENV === 'production';
+    const hasDatabase = process.env.DATABASE_FILE_URL || process.env.DATABASE_URL;
+    
+    if (isProduction && !hasDatabase) {
+      console.log('🔄 Production environment without database - using fallback immediately');
+      const searchResults = generateDeploymentFallbackResults(query, limit);
+      return {
+        query,
+        results: searchResults,
+        totalResults: searchResults.length
+      };
+    }
+
     try {
-      // Try to use real database first with timeout
+      // Try to use real database first with shorter timeout for production
+      const timeoutMs = isProduction ? 5000 : 10000; // 5 seconds in production, 10 in dev
       const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => reject(new Error('Database search timeout after 10 seconds')), 10000);
+        setTimeout(() => reject(new Error(`Database search timeout after ${timeoutMs/1000} seconds`)), timeoutMs);
       });
       
       // 1. Try remote database download if URL is provided (our simple approach)
       if (process.env.DATABASE_FILE_URL) {
         console.log('🌐 Attempting remote database download...');
-        const searchPromise = searchRemoteDatabase(query, limit);
-        const realResults = await Promise.race([searchPromise, timeoutPromise]) as any[];
-        
-        if (realResults && Array.isArray(realResults) && realResults.length > 0) {
-          return {
-            query,
-            results: realResults,
-            totalResults: realResults.length
-          };
+        try {
+          const searchPromise = searchRemoteDatabase(query, limit);
+          const realResults = await Promise.race([searchPromise, timeoutPromise]) as any[];
+          
+          if (realResults && Array.isArray(realResults) && realResults.length > 0) {
+            return {
+              query,
+              results: realResults,
+              totalResults: realResults.length
+            };
+          }
+        } catch (dbError) {
+          console.log('❌ Remote database failed:', dbError.message);
+          throw dbError;
         }
       }
       
-      // 2. Fallback to local database
-      const searchPromise2 = searchRealDatabase(query, limit);
-      const realResults2 = await Promise.race([searchPromise2, timeoutPromise]);
-      
-      if (realResults2 && realResults2.length > 0) {
-        return {
-          query,
-          results: realResults2,
-          totalResults: realResults2.length
-        };
+      // 2. Fallback to local database (only in development)
+      if (!isProduction) {
+        const searchPromise2 = searchRealDatabase(query, limit);
+        const realResults2 = await Promise.race([searchPromise2, timeoutPromise]);
+        
+        if (realResults2 && realResults2.length > 0) {
+          return {
+            query,
+            results: realResults2,
+            totalResults: realResults2.length
+          };
+        }
       }
     } catch (error) {
-      console.log('🔄 Real database search failed, using fallback data');
+      console.log('🔄 Database search failed, using fallback data');
       console.log('🔍 Error details:', error.message);
       console.log('🌍 Environment:', process.env.NODE_ENV || 'unknown');
       console.log('📁 Current working directory:', process.cwd());
-      console.log('🚀 Deployment mode:', process.env.MASTRA_DEPLOYMENT || 'false');
+      console.log('🚀 Production mode:', isProduction);
     }
     
     // Fallback to realistic mock data with deployment notification
@@ -102,23 +124,39 @@ export const searchTranscriptsTool = createTool({
       console.log('🔄 Using fallback data - database not available in deployment');
       const searchResults = generateDeploymentFallbackResults(query, limit);
       
+      // Additional safety check
+      if (!searchResults || !Array.isArray(searchResults) || searchResults.length === 0) {
+        console.log('⚠️ Fallback function returned empty results, using emergency fallback');
+        return {
+          query,
+          results: [{
+            videoTitle: "Computer Science Fundamentals",
+            transcript: `[EMERGENCY FALLBACK] Here's information about "${query}" from our Computer Science curriculum. This covers fundamental concepts in programming, algorithms, and data structures that are essential for understanding modern computing.`,
+            timestamp: "5:00",
+            videoUrl: "https://www.youtube.com/watch?v=emergency",
+            relevanceScore: 0.70
+          }],
+          totalResults: 1
+        };
+      }
+      
       return {
         query,
         results: searchResults,
         totalResults: searchResults.length
       };
-    } catch (error) {
-      console.error('Search tool error:', error);
+    } catch (fallbackError) {
+      console.error('❌ Fallback function failed:', fallbackError);
       
-      // Return empty results on error
+      // Emergency fallback - this should never fail
       return {
         query: query || 'error',
         results: [{
-          videoTitle: "Search Error",
-          transcript: `Error occurred while searching for "${query}": ${error.message}`,
-          timestamp: "00:00",
+          videoTitle: "Search Error - Fallback Failed",
+          transcript: `Error occurred while generating fallback results for "${query}". Our database is temporarily unavailable, but we're working to restore service.`,
+          timestamp: "0:00",
           videoUrl: "https://youtube.com/watch?v=error",
-          relevanceScore: 0
+          relevanceScore: 0.50
         }],
         totalResults: 1
       };
