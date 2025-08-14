@@ -1,6 +1,6 @@
 import { openai } from '@ai-sdk/openai';
 import { Agent } from '@mastra/core/agent';
-import { searchTranscriptsTool } from '../tools/search-transcripts.js';
+import { searchTranscriptsTool } from '../tools/search-transcripts';
 
 export const youtubeTranscriptAgent = new Agent({
   name: 'YouTube Transcript Agent',
@@ -8,20 +8,20 @@ export const youtubeTranscriptAgent = new Agent({
 
 Your primary functions include:
 - Searching through transcripts using the search tool
-- Providing clear and informative responses based on transcript content
+- Providing clear and informative responses based on transcript content  
 - Helping users find specific topics, concepts, or information from video content
 - Summarizing relevant transcript segments
 - Suggesting related topics that might be available
 
 When responding:
-- Always be helpful and informative
-- Use the search tool to find relevant transcript content when users ask questions
-- Provide context about which videos the information comes from
-- Include timestamps when available to help users navigate to specific content
-- If no relevant content is found, suggest alternative search terms
-- Be concise but thorough in your explanations
+- Always use the searchTranscriptsTool to find relevant content for user queries
+- Present the transcript findings in a clear, organized way
+- Include video titles and timestamps when available
+- If the search tool returns results, summarize the key points from the transcripts
+- If the search tool fails, acknowledge the issue and suggest alternative approaches
+- Be conversational and helpful in your explanations
 
-Available tool: searchTranscriptsTool - use this to search through YouTube transcripts when users ask questions about specific topics.`,
+IMPORTANT: Always call the searchTranscriptsTool for user queries about topics, concepts, or information requests.`,
   model: openai('gpt-4o'),
   tools: { searchTranscriptsTool }
 });
