@@ -12,10 +12,10 @@ yarn-debug.log*
 yarn-error.log*
 
 # Database files (too large for GitHub - deploy separately)
-data/
-*.db
-*.sqlite
-*.sqlite3
+# data/
+# *.db
+# *.sqlite
+# *.sqlite3
 
 # Build outputs
 dist/

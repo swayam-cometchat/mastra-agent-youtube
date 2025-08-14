@@ -77,9 +77,10 @@ export const searchTranscriptsTool = createTool({
       console.log('Real database search failed, using fallback:', error.message);
     }
     
-    // Fallback to realistic mock data
+    // Fallback to realistic mock data with deployment notification
     try {
-      const searchResults = generateRealisticResults(query, limit);
+      console.log('🔄 Using fallback data - database not available in deployment');
+      const searchResults = generateDeploymentFallbackResults(query, limit);
       
       return {
         query,
@@ -119,11 +120,18 @@ async function searchRealDatabase(query: string, limit: number) {
     // Get absolute path to database
     const path = await import('path');
     const { fileURLToPath } = await import('url');
+    const fs = await import('fs');
     const __filename = fileURLToPath(import.meta.url);
     const __dirname = path.dirname(__filename);
     const dbPath = path.resolve(__dirname, '../../../data/transcript_vectors.db');
     
     console.log(`📂 Database path: ${dbPath}`);
+    
+    // Check if database file exists
+    if (!fs.existsSync(dbPath)) {
+      console.log('⚠️ Database file not found at:', dbPath);
+      throw new Error('Database file not found - using fallback data');
+    }
     
     // Create database instance with explicit path
     const db = new VectorDatabase(dbPath);
@@ -148,6 +156,9 @@ async function searchRealDatabase(query: string, limit: number) {
           reject(err);
         } else {
           console.log(`📊 Database has ${row?.count || 0} transcript segments`);
+          if (row?.count === 0) {
+            reject(new Error('Database is empty - no transcript segments found'));
+          }
           resolve(row);
         }
       });
@@ -202,6 +213,61 @@ function formatTime(seconds: number): string {
   const mins = Math.floor(seconds / 60);
   const secs = Math.floor(seconds % 60);
   return `${mins}:${secs.toString().padStart(2, '0')}`;
+}
+
+function generateDeploymentFallbackResults(query: string, limit: number) {
+  // Computer Science Crash Course themed fallback data
+  const fallbackResults = [
+    {
+      videoTitle: "Intro to Algorithms: Crash Course Computer Science #13",
+      transcript: `[FALLBACK DATA] An algorithm is just a series of steps that solve a problem. In computer science, we use algorithms to sort data, search through information, and solve complex computational problems. Some algorithms are better than others - we measure this through time and space complexity.`,
+      timestamp: "2:15",
+      videoUrl: "https://www.youtube.com/watch?v=rL8X2mlNHPM",
+      relevanceScore: 0.85
+    },
+    {
+      videoTitle: "Data Structures: Crash Course Computer Science #14", 
+      transcript: `[FALLBACK DATA] Data structures are ways of organizing and storing data in a computer so it can be used efficiently. Arrays, linked lists, stacks, queues, trees, and graphs are fundamental data structures every programmer should understand.`,
+      timestamp: "1:30",
+      videoUrl: "https://www.youtube.com/watch?v=DuDz6B4cqVc",
+      relevanceScore: 0.82
+    },
+    {
+      videoTitle: "Programming Basics: Statements & Functions: Crash Course Computer Science #12",
+      transcript: `[FALLBACK DATA] Programming is about writing instructions for computers to follow. We use variables to store data, functions to organize code, and control structures like loops and conditionals to make decisions.`,
+      timestamp: "3:45", 
+      videoUrl: "https://www.youtube.com/watch?v=l26oaHV7D40",
+      relevanceScore: 0.78
+    },
+    {
+      videoTitle: "How Computers Calculate - the ALU: Crash Course Computer Science #5",
+      transcript: `[FALLBACK DATA] The Arithmetic Logic Unit (ALU) is the mathematical brain of a computer. It performs arithmetic operations like addition and subtraction, as well as logical operations like AND, OR, and NOT.`,
+      timestamp: "4:20",
+      videoUrl: "https://www.youtube.com/watch?v=1I5ZMmrOfnA", 
+      relevanceScore: 0.75
+    },
+    {
+      videoTitle: "Boolean Logic & Logic Gates: Crash Course Computer Science #3",
+      transcript: `[FALLBACK DATA] Boolean logic is the foundation of all computer operations. Using just true and false values, we can represent any logical statement and build complex computational systems using logic gates.`,
+      timestamp: "2:50",
+      videoUrl: "https://www.youtube.com/watch?v=gI-qXk7XojA",
+      relevanceScore: 0.72
+    }
+  ];
+
+  // Filter results based on query relevance and return requested limit
+  const filteredResults = fallbackResults
+    .filter(result => 
+      result.transcript.toLowerCase().includes(query.toLowerCase()) ||
+      result.videoTitle.toLowerCase().includes(query.toLowerCase()) ||
+      ['algorithm', 'computer', 'programming', 'data', 'science'].some(keyword => 
+        query.toLowerCase().includes(keyword.toLowerCase())
+      )
+    )
+    .slice(0, limit);
+
+  // If no relevant results, return first few results
+  return filteredResults.length > 0 ? filteredResults : fallbackResults.slice(0, limit);
 }
 
 function generateRealisticResults(query: string, limit: number) {
