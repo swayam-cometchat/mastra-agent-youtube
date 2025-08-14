@@ -72,13 +72,32 @@ export const searchTranscriptsTool = createTool({
     }
 
     try {
-      // Try to use real database first with shorter timeout for production
+      // 1. Try ChromaDB vector search first (NEW!)
+      console.log('⚡ Attempting ChromaDB vector search...');
+      try {
+        const ChromaVectorService = await import('../../services/chromaVectorService.js');
+        const chromaService = new ChromaVectorService.default();
+        const vectorResults = await chromaService.vectorSearch(query, limit);
+        
+        if (vectorResults && vectorResults.length > 0) {
+          console.log('🎯 ChromaDB vector search successful!');
+          return {
+            query,
+            results: vectorResults,
+            totalResults: vectorResults.length
+          };
+        }
+      } catch (chromaError) {
+        console.log('⚠️ ChromaDB unavailable, falling back to SQLite search');
+      }
+
+      // 2. Try to use real database with shorter timeout for production
       const timeoutMs = isProduction ? 5000 : 10000; // 5 seconds in production, 10 in dev
       const timeoutPromise = new Promise((_, reject) => {
         setTimeout(() => reject(new Error(`Database search timeout after ${timeoutMs/1000} seconds`)), timeoutMs);
       });
       
-      // 1. Try remote database download if URL is provided (our simple approach)
+      // 3. Try remote database download if URL is provided (our simple approach)
       if (process.env.DATABASE_FILE_URL) {
         console.log('🌐 Attempting remote database download...');
         try {
@@ -98,7 +117,7 @@ export const searchTranscriptsTool = createTool({
         }
       }
       
-      // 2. Fallback to local database (only in development)
+      // 4. Fallback to local database (only in development)
       if (!isProduction) {
         const searchPromise2 = searchRealDatabase(query, limit);
         const realResults2 = await Promise.race([searchPromise2, timeoutPromise]);
