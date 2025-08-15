@@ -62,6 +62,15 @@ export const searchTranscriptsTool = createTool({
     const hasChromaCloud = process.env.CHROMA_CLOUD_API_KEY && process.env.CHROMA_TENANT && process.env.CHROMA_DATABASE;
     const hasLocalDatabase = process.env.DATABASE_FILE_URL || process.env.DATABASE_URL;
     
+    // ENHANCED PRODUCTION DEBUGGING
+    console.log('🔬 DETAILED ENVIRONMENT DEBUG:');
+    console.log('  NODE_ENV:', process.env.NODE_ENV || 'undefined');
+    console.log('  CHROMA_CLOUD_API_KEY length:', process.env.CHROMA_CLOUD_API_KEY ? process.env.CHROMA_CLOUD_API_KEY.length : 'undefined');
+    console.log('  CHROMA_TENANT length:', process.env.CHROMA_TENANT ? process.env.CHROMA_TENANT.length : 'undefined');
+    console.log('  CHROMA_DATABASE value:', process.env.CHROMA_DATABASE || 'undefined');
+    console.log('  hasChromaCloud calculated:', hasChromaCloud);
+    console.log('  All env keys containing CHROMA:', Object.keys(process.env).filter(key => key.includes('CHROMA')));
+    
     // Only use immediate fallback if we have no database configuration at all
     if (isProduction && !hasChromaCloud && !hasLocalDatabase) {
       console.log('🔄 Production environment without any database - using fallback immediately');
