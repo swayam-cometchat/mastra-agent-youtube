@@ -6,8 +6,10 @@ class ChromaVectorService {
   constructor() {
     // Use environment variables for Chroma Cloud or local development
     const isProduction = process.env.NODE_ENV === 'production';
+    const hasChromaCloudCredentials = process.env.CHROMA_CLOUD_API_KEY && process.env.CHROMA_TENANT && process.env.CHROMA_DATABASE;
     
-    if (isProduction && process.env.CHROMA_CLOUD_API_KEY) {
+    // Use Chroma Cloud if credentials are available, regardless of environment
+    if (hasChromaCloudCredentials) {
       // Chroma Cloud configuration
       this.client = new CloudClient({
         apiKey: process.env.CHROMA_CLOUD_API_KEY,
@@ -27,14 +29,15 @@ class ChromaVectorService {
     this.collection = null;
     this.embedFunction = new DefaultEmbeddingFunction();
     this.isProduction = isProduction;
+    this.hasChromaCloudCredentials = hasChromaCloudCredentials;
   }
 
   async initialize() {
     try {
       const collectionName = process.env.CHROMA_COLLECTION_NAME || "youtube_transcripts_complete";
       
-      // For production, add more robust error handling
-      if (this.isProduction) {
+      // For Chroma Cloud, add more robust error handling
+      if (this.hasChromaCloudCredentials) {
         // Try with longer timeout for cloud connection
         const timeoutPromise = new Promise((_, reject) => 
           setTimeout(() => reject(new Error('Cloud connection timeout')), 15000)
