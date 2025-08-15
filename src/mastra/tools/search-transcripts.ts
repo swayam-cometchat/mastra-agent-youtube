@@ -57,12 +57,14 @@ export const searchTranscriptsTool = createTool({
       };
     }
     
-    // Check if we're in production without database URL - use fallback immediately
+    // Check if we have Chroma Cloud or local database configured
     const isProduction = process.env.NODE_ENV === 'production';
-    const hasDatabase = process.env.DATABASE_FILE_URL || process.env.DATABASE_URL;
+    const hasChromaCloud = process.env.CHROMA_CLOUD_API_KEY && process.env.CHROMA_TENANT && process.env.CHROMA_DATABASE;
+    const hasLocalDatabase = process.env.DATABASE_FILE_URL || process.env.DATABASE_URL;
     
-    if (isProduction && !hasDatabase) {
-      console.log('🔄 Production environment without database - using fallback immediately');
+    // Only use immediate fallback if we have no database configuration at all
+    if (isProduction && !hasChromaCloud && !hasLocalDatabase) {
+      console.log('🔄 Production environment without any database - using fallback immediately');
       const searchResults = generateDeploymentFallbackResults(query, limit);
       return {
         query,
@@ -82,8 +84,13 @@ export const searchTranscriptsTool = createTool({
       
       try {
         const ChromaVectorService = await import('../../services/chromaVectorService.js');
+        console.log('📦 ChromaVectorService imported successfully');
+        
         const chromaService = new ChromaVectorService.default();
+        console.log('🏗️ ChromaVectorService instance created');
+        
         const vectorResults = await chromaService.vectorSearch(query, limit);
+        console.log('🔍 vectorSearch completed, results:', vectorResults ? vectorResults.length : 'null');
         
         if (vectorResults && vectorResults.length > 0) {
           console.log('🎯 ChromaDB vector search successful!');
@@ -92,9 +99,13 @@ export const searchTranscriptsTool = createTool({
             results: vectorResults,
             totalResults: vectorResults.length
           };
+        } else {
+          console.log('📭 ChromaDB returned empty results');
         }
       } catch (chromaError) {
-        console.log('❌ ChromaDB error:', chromaError.message);
+        console.log('❌ ChromaDB error details:', chromaError);
+        console.log('❌ ChromaDB error message:', chromaError.message);
+        console.log('❌ ChromaDB error stack:', chromaError.stack);
         console.log('⚠️ ChromaDB unavailable, falling back to SQLite search');
       }
 
