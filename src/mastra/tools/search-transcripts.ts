@@ -20,6 +20,13 @@ export const searchTranscriptsTool = createTool({
     query: z.string()
   }),
   execute: async (params) => {
+    const debugInfo: string[] = [];
+    debugInfo.push('🚀 SEARCH TOOL EXECUTION STARTED');
+    debugInfo.push(`📥 Raw params received: ${JSON.stringify(params, null, 2)}`);
+    debugInfo.push(`📥 Params type: ${typeof params}`);
+    debugInfo.push(`📥 Params constructor: ${params.constructor.name}`);
+    debugInfo.push(`📥 Params keys: ${JSON.stringify(Object.keys(params))}`);
+    
     console.log('🚀 SEARCH TOOL EXECUTION STARTED');
     console.log('📥 Raw params received:', JSON.stringify(params, null, 2));
     console.log('📥 Params type:', typeof params);
@@ -31,20 +38,25 @@ export const searchTranscriptsTool = createTool({
     
     // Based on Mastra's parameter structure, the actual parameters are in params.context
     if (params && params.context) {
+      debugInfo.push('🔧 Using params.context');
       console.log('🔧 Using params.context');
       query = params.context.query;
       limit = params.context.limit || 3;
     } else if (params && (params as any).query) {
+      debugInfo.push('🔧 Using params.query directly');
       console.log('🔧 Using params.query directly');
       query = (params as any).query;
       limit = (params as any).limit || 3;
     } else {
+      debugInfo.push('🔧 Using fallback parameter extraction');
       console.log('🔧 Using fallback parameter extraction');
       // Try different possible structures
       query = (params as any)?.input?.query || (params as any)?.args?.query || params;
       limit = (params as any)?.input?.limit || (params as any)?.args?.limit || 3;
     }
     
+    debugInfo.push(`🔍 Parsed query: ${query}`);
+    debugInfo.push(`📊 Limit: ${limit}`);
     console.log('🔍 Parsed query:', query);
     console.log('📊 Limit:', limit);
     
@@ -100,14 +112,23 @@ export const searchTranscriptsTool = createTool({
       
       try {
         const ChromaVectorService = await import('../../services/chromaVectorService.js');
+        debugInfo.push('📦 ChromaVectorService imported successfully');
         console.log('📦 ChromaVectorService imported successfully');
         
         const chromaService = new ChromaVectorService.default();
+        debugInfo.push('🏗️ ChromaVectorService instance created');
+        debugInfo.push(`🔍 ChromaService client type: ${chromaService.client?.constructor?.name || 'unknown'}`);
+        debugInfo.push(`🌍 Has Chroma Cloud creds: ${chromaService.hasChromaCloudCredentials}`);
         console.log('🏗️ ChromaVectorService instance created');
         console.log('🔍 ChromaService client type:', chromaService.client?.constructor?.name || 'unknown');
         console.log('🌍 Has Chroma Cloud creds:', chromaService.hasChromaCloudCredentials);
         
         const vectorResults = await chromaService.vectorSearch(query, limit);
+        debugInfo.push(`🔍 vectorSearch completed, results: ${vectorResults ? vectorResults.length : 'null'}`);
+        debugInfo.push('🔍 DETAILED RESULTS ANALYSIS:');
+        debugInfo.push(`  - Results array exists: ${Array.isArray(vectorResults)}`);
+        debugInfo.push(`  - Results length: ${vectorResults?.length || 'undefined'}`);
+        debugInfo.push(`  - Results type: ${typeof vectorResults}`);
         console.log('🔍 vectorSearch completed, results:', vectorResults ? vectorResults.length : 'null');
         console.log('🔍 DETAILED RESULTS ANALYSIS:');
         console.log('  - Results array exists:', Array.isArray(vectorResults));
@@ -115,21 +136,40 @@ export const searchTranscriptsTool = createTool({
         console.log('  - Results type:', typeof vectorResults);
         
         if (vectorResults && vectorResults.length > 0) {
+          debugInfo.push(`  - First result keys: ${JSON.stringify(Object.keys(vectorResults[0] || {}))}`);
+          debugInfo.push(`  - First result transcript preview: ${vectorResults[0]?.transcript?.substring(0, 100) || 'no transcript'}`);
+          debugInfo.push(`  - First result source: ${vectorResults[0]?.source || 'no source'}`);
+          debugInfo.push('🎯 ChromaDB vector search successful!');
+          debugInfo.push(`🎯 First result sample: ${vectorResults[0].transcript.substring(0, 50)}`);
           console.log('  - First result keys:', Object.keys(vectorResults[0] || {}));
           console.log('  - First result transcript preview:', vectorResults[0]?.transcript?.substring(0, 100) || 'no transcript');
           console.log('  - First result source:', vectorResults[0]?.source || 'no source');
           console.log('🎯 ChromaDB vector search successful!');
           console.log('🎯 First result sample:', vectorResults[0].transcript.substring(0, 50));
+          
+          // Add debug info to the first result
+          (vectorResults[0] as any).debugInfo = debugInfo.join('\n');
+          
           return {
             query,
             results: vectorResults,
             totalResults: vectorResults.length
           };
         } else {
+          debugInfo.push('📭 ChromaDB returned empty results - this will trigger fallback');
+          debugInfo.push(`📭 Specific empty case: ${vectorResults === null ? 'null' : vectorResults === undefined ? 'undefined' : 'empty array'}`);
           console.log('📭 ChromaDB returned empty results - this will trigger fallback');
           console.log('📭 Specific empty case:', vectorResults === null ? 'null' : vectorResults === undefined ? 'undefined' : 'empty array');
         }
       } catch (chromaError: any) {
+        debugInfo.push(`❌ ChromaDB error details: ${chromaError}`);
+        debugInfo.push(`❌ ChromaDB error message: ${chromaError?.message || 'no message'}`);
+        debugInfo.push(`❌ ChromaDB error name: ${chromaError?.name || 'no name'}`);
+        debugInfo.push(`❌ ChromaDB error code: ${chromaError?.code || 'no code'}`);
+        debugInfo.push(`❌ ChromaDB error type: ${typeof chromaError}`);
+        debugInfo.push(`❌ ChromaDB error constructor: ${chromaError?.constructor?.name || 'unknown'}`);
+        debugInfo.push('🚨 CRITICAL: ChromaDB failed - this explains the fallback results!');
+        
         console.log('❌ ChromaDB error details:', chromaError);
         console.log('❌ ChromaDB error message:', chromaError?.message || 'no message');
         console.log('❌ ChromaDB error name:', chromaError?.name || 'no name');
@@ -138,6 +178,7 @@ export const searchTranscriptsTool = createTool({
         console.log('❌ ChromaDB error constructor:', chromaError?.constructor?.name || 'unknown');
         
         if (chromaError?.stack) {
+          debugInfo.push(`❌ ChromaDB error stack (first 200 chars): ${chromaError.stack.substring(0, 200)}`);
           console.log('❌ ChromaDB error stack (first 500 chars):', chromaError.stack.substring(0, 500));
         }
         
@@ -198,7 +239,7 @@ export const searchTranscriptsTool = createTool({
         }
       }
       
-      // 4. Fallback to local database (only in development)
+      // 4. Fallback to local database (ondidly in development)
       if (!isProduction) {
         const searchPromise2 = searchRealDatabase(query, limit);
         const realResults2 = await Promise.race([searchPromise2, timeoutPromise]);
@@ -221,11 +262,18 @@ export const searchTranscriptsTool = createTool({
     
     // Fallback to realistic mock data with deployment notification
     try {
+      debugInfo.push('🔄 Using fallback data - database not available in deployment');
       console.log('🔄 Using fallback data - database not available in deployment');
       const searchResults = generateDeploymentFallbackResults(query, limit);
       
+      // Add debug info to the first fallback result
+      if (searchResults && searchResults.length > 0) {
+        (searchResults[0] as any).debugInfo = debugInfo.join('\n');
+      }
+      
       // Additional safety check
       if (!searchResults || !Array.isArray(searchResults) || searchResults.length === 0) {
+        debugInfo.push('⚠️ Fallback function returned empty results, using emergency fallback');
         console.log('⚠️ Fallback function returned empty results, using emergency fallback');
         return {
           query,
@@ -234,7 +282,8 @@ export const searchTranscriptsTool = createTool({
             transcript: `[EMERGENCY FALLBACK] Here's information about "${query}" from our Computer Science curriculum. This covers fundamental concepts in programming, algorithms, and data structures that are essential for understanding modern computing.`,
             timestamp: "5:00",
             videoUrl: "https://www.youtube.com/watch?v=emergency",
-            relevanceScore: 0.70
+            relevanceScore: 0.70,
+            debugInfo: debugInfo.join('\n')
           }],
           totalResults: 1
         };
