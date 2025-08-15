@@ -105,7 +105,7 @@ export const searchTranscriptsTool = createTool({
         } else {
           console.log('📭 ChromaDB returned empty results');
         }
-      } catch (chromaError) {
+      } catch (chromaError: any) {
         console.log('❌ ChromaDB error details:', chromaError);
         console.log('❌ ChromaDB error message:', chromaError.message);
         console.log('❌ ChromaDB error name:', chromaError.name);
@@ -113,6 +113,32 @@ export const searchTranscriptsTool = createTool({
         if (chromaError.stack) {
           console.log('❌ ChromaDB error stack (first 500 chars):', chromaError.stack.substring(0, 500));
         }
+        
+        // Check specific error types for better debugging
+        if (chromaError.message && chromaError.message.includes('timeout')) {
+          console.log('🌐 TIMEOUT: ChromaDB Cloud connection timed out in production');
+        } else if (chromaError.message && (chromaError.message.includes('fetch') || chromaError.message.includes('network'))) {
+          console.log('🌐 NETWORK: ChromaDB Cloud network error in production');
+        } else if (chromaError.message && (chromaError.message.includes('module') || chromaError.message.includes('import'))) {
+          console.log('📦 MODULE: ChromaDB package import/bundling issue in production');
+        } else {
+          console.log('❓ UNKNOWN: ChromaDB error type not recognized');
+        }
+        
+        // If we're in production and ChromaDB fails, try to return realistic educational results
+        if (isProduction) {
+          console.log('🎓 Production ChromaDB failed - using educational content fallback');
+          const educationalResults = generateDeploymentFallbackResults(query, limit);
+          if (educationalResults && educationalResults.length > 0) {
+            return {
+              query,
+              results: educationalResults,
+              totalResults: educationalResults.length,
+              source: 'Educational Fallback (ChromaDB unavailable in production)'
+            };
+          }
+        }
+        
         console.log('⚠️ ChromaDB unavailable, falling back to SQLite search');
       }
 
