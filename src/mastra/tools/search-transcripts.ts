@@ -88,12 +88,15 @@ export const searchTranscriptsTool = createTool({
         
         const chromaService = new ChromaVectorService.default();
         console.log('🏗️ ChromaVectorService instance created');
+        console.log('🔍 ChromaService client type:', chromaService.client?.constructor?.name || 'unknown');
+        console.log('🌍 Has Chroma Cloud creds:', chromaService.hasChromaCloudCredentials);
         
         const vectorResults = await chromaService.vectorSearch(query, limit);
         console.log('🔍 vectorSearch completed, results:', vectorResults ? vectorResults.length : 'null');
         
         if (vectorResults && vectorResults.length > 0) {
           console.log('🎯 ChromaDB vector search successful!');
+          console.log('🎯 First result sample:', vectorResults[0].transcript.substring(0, 50));
           return {
             query,
             results: vectorResults,
@@ -105,7 +108,11 @@ export const searchTranscriptsTool = createTool({
       } catch (chromaError) {
         console.log('❌ ChromaDB error details:', chromaError);
         console.log('❌ ChromaDB error message:', chromaError.message);
-        console.log('❌ ChromaDB error stack:', chromaError.stack);
+        console.log('❌ ChromaDB error name:', chromaError.name);
+        console.log('❌ ChromaDB error code:', chromaError.code);
+        if (chromaError.stack) {
+          console.log('❌ ChromaDB error stack (first 500 chars):', chromaError.stack.substring(0, 500));
+        }
         console.log('⚠️ ChromaDB unavailable, falling back to SQLite search');
       }
 
