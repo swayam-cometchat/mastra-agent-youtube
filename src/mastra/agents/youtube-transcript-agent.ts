@@ -1,6 +1,17 @@
 import { openai } from '@ai-sdk/openai';
 import { Agent } from '@mastra/core/agent';
+import { Memory } from '@mastra/memory';
+import { LibSQLStore } from '@mastra/libsql';
 import { searchTranscriptsTool } from '../tools/search-transcripts';
+
+// Configure memory storage
+const memory = new Memory({
+  storage: new LibSQLStore({
+    url: process.env.NODE_ENV === 'production' 
+      ? 'file:./mastra-memory.db'  // Simple file storage for production
+      : 'file:./dev-memory.db'     // Separate dev database
+  })
+});
 
 export const youtubeTranscriptAgent = new Agent({
   name: 'YouTube Transcript Agent',
@@ -23,5 +34,6 @@ When responding:
 
 IMPORTANT: Always call the searchTranscriptsTool for user queries about topics, concepts, or information requests.`,
   model: openai('gpt-4o'),
-  tools: { searchTranscriptsTool }
+  tools: { searchTranscriptsTool },
+  memory
 });
