@@ -109,8 +109,15 @@ export const searchTranscriptsTool = createTool({
         
         const vectorResults = await chromaService.vectorSearch(query, limit);
         console.log('🔍 vectorSearch completed, results:', vectorResults ? vectorResults.length : 'null');
+        console.log('🔍 DETAILED RESULTS ANALYSIS:');
+        console.log('  - Results array exists:', Array.isArray(vectorResults));
+        console.log('  - Results length:', vectorResults?.length || 'undefined');
+        console.log('  - Results type:', typeof vectorResults);
         
         if (vectorResults && vectorResults.length > 0) {
+          console.log('  - First result keys:', Object.keys(vectorResults[0] || {}));
+          console.log('  - First result transcript preview:', vectorResults[0]?.transcript?.substring(0, 100) || 'no transcript');
+          console.log('  - First result source:', vectorResults[0]?.source || 'no source');
           console.log('🎯 ChromaDB vector search successful!');
           console.log('🎯 First result sample:', vectorResults[0].transcript.substring(0, 50));
           return {
@@ -119,27 +126,34 @@ export const searchTranscriptsTool = createTool({
             totalResults: vectorResults.length
           };
         } else {
-          console.log('📭 ChromaDB returned empty results');
+          console.log('📭 ChromaDB returned empty results - this will trigger fallback');
+          console.log('📭 Specific empty case:', vectorResults === null ? 'null' : vectorResults === undefined ? 'undefined' : 'empty array');
         }
       } catch (chromaError: any) {
         console.log('❌ ChromaDB error details:', chromaError);
-        console.log('❌ ChromaDB error message:', chromaError.message);
-        console.log('❌ ChromaDB error name:', chromaError.name);
-        console.log('❌ ChromaDB error code:', chromaError.code);
-        if (chromaError.stack) {
+        console.log('❌ ChromaDB error message:', chromaError?.message || 'no message');
+        console.log('❌ ChromaDB error name:', chromaError?.name || 'no name');
+        console.log('❌ ChromaDB error code:', chromaError?.code || 'no code');
+        console.log('❌ ChromaDB error type:', typeof chromaError);
+        console.log('❌ ChromaDB error constructor:', chromaError?.constructor?.name || 'unknown');
+        
+        if (chromaError?.stack) {
           console.log('❌ ChromaDB error stack (first 500 chars):', chromaError.stack.substring(0, 500));
         }
         
         // Check specific error types for better debugging
-        if (chromaError.message && chromaError.message.includes('timeout')) {
+        if (chromaError?.message && chromaError.message.includes('timeout')) {
           console.log('🌐 TIMEOUT: ChromaDB Cloud connection timed out in production');
-        } else if (chromaError.message && (chromaError.message.includes('fetch') || chromaError.message.includes('network'))) {
+        } else if (chromaError?.message && (chromaError.message.includes('fetch') || chromaError.message.includes('network'))) {
           console.log('🌐 NETWORK: ChromaDB Cloud network error in production');
-        } else if (chromaError.message && (chromaError.message.includes('module') || chromaError.message.includes('import'))) {
+        } else if (chromaError?.message && (chromaError.message.includes('module') || chromaError.message.includes('import'))) {
           console.log('📦 MODULE: ChromaDB package import/bundling issue in production');
         } else {
           console.log('❓ UNKNOWN: ChromaDB error type not recognized');
+          console.log('❓ Full error object keys:', Object.keys(chromaError || {}));
         }
+        
+        console.log('🚨 CRITICAL: ChromaDB failed - this explains the fallback results!');
         
         // If we're in production and ChromaDB fails, try to return realistic educational results
         if (isProduction) {
