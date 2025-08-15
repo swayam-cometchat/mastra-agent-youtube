@@ -26,15 +26,39 @@ class ChromaVectorService {
     
     this.collection = null;
     this.embedFunction = new DefaultEmbeddingFunction();
+    this.isProduction = isProduction;
   }
 
   async initialize() {
     try {
       const collectionName = process.env.CHROMA_COLLECTION_NAME || "youtube_transcripts_complete";
-      this.collection = await this.client.getCollection({ 
-        name: collectionName,
-        embeddingFunction: this.embedFunction
-      });
+      
+      // For production, add more robust error handling
+      if (this.isProduction) {
+        // Try with longer timeout for cloud connection
+        const timeoutPromise = new Promise((_, reject) => 
+          setTimeout(() => reject(new Error('Cloud connection timeout')), 15000)
+        );
+        
+        const connectPromise = this.client.getCollection({ 
+          name: collectionName,
+          embeddingFunction: this.embedFunction
+        });
+        
+        this.collection = await Promise.race([connectPromise, timeoutPromise]);
+      } else {
+        // For local development, handle missing collection gracefully
+        try {
+          this.collection = await this.client.getCollection({ 
+            name: collectionName,
+            embeddingFunction: this.embedFunction
+          });
+        } catch (localError) {
+          console.log('⚠️ Local collection not found - this is normal if you haven\'t set up local data');
+          throw new Error('Local ChromaDB collection not available');
+        }
+      }
+      
       console.log('✅ ChromaDB connection established');
       return true;
     } catch (error) {

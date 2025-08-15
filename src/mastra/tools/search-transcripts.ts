@@ -74,6 +74,12 @@ export const searchTranscriptsTool = createTool({
     try {
       // 1. Try ChromaDB vector search first (NEW!)
       console.log('⚡ Attempting ChromaDB vector search...');
+      console.log('🐛 DEBUG - Environment check:');
+      console.log('NODE_ENV:', process.env.NODE_ENV);
+      console.log('CHROMA_CLOUD_API_KEY:', process.env.CHROMA_CLOUD_API_KEY ? 'SET' : 'MISSING');
+      console.log('CHROMA_TENANT:', process.env.CHROMA_TENANT ? 'SET' : 'MISSING');
+      console.log('CHROMA_DATABASE:', process.env.CHROMA_DATABASE ? 'SET' : 'MISSING');
+      
       try {
         const ChromaVectorService = await import('../../services/chromaVectorService.js');
         const chromaService = new ChromaVectorService.default();
@@ -88,6 +94,7 @@ export const searchTranscriptsTool = createTool({
           };
         }
       } catch (chromaError) {
+        console.log('❌ ChromaDB error:', chromaError.message);
         console.log('⚠️ ChromaDB unavailable, falling back to SQLite search');
       }
 
