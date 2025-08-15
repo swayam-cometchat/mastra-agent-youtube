@@ -20,30 +20,37 @@ export const searchTranscriptsTool = createTool({
     query: z.string()
   }),
   execute: async (params) => {
+    console.log('🚀 SEARCH TOOL EXECUTION STARTED');
+    console.log('📥 Raw params received:', JSON.stringify(params, null, 2));
+    console.log('📥 Params type:', typeof params);
+    console.log('📥 Params constructor:', params.constructor.name);
+    console.log('📥 Params keys:', Object.keys(params));
+    
     // Extract query and limit from parameters
     let query, limit = 3;
     
     // Based on Mastra's parameter structure, the actual parameters are in params.context
     if (params && params.context) {
+      console.log('🔧 Using params.context');
       query = params.context.query;
       limit = params.context.limit || 3;
-    } else if (params && typeof params === 'object') {
-      if (params.query) {
-        query = params.query;
-        limit = params.limit || 3;
-      } else if (params.input && params.input.query) {
-        query = params.input.query;
-        limit = params.input.limit || 3;
-      } else if (params.args && params.args.query) {
-        query = params.args.query;
-        limit = params.args.limit || 3;
-      }
-    } else if (typeof params === 'string') {
-      query = params;
+    } else if (params && (params as any).query) {
+      console.log('🔧 Using params.query directly');
+      query = (params as any).query;
+      limit = (params as any).limit || 3;
+    } else {
+      console.log('🔧 Using fallback parameter extraction');
+      // Try different possible structures
+      query = (params as any)?.input?.query || (params as any)?.args?.query || params;
+      limit = (params as any)?.input?.limit || (params as any)?.args?.limit || 3;
     }
+    
+    console.log('🔍 Parsed query:', query);
+    console.log('📊 Limit:', limit);
     
     // Validate query
     if (!query || query === 'undefined' || typeof query !== 'string') {
+      console.log('❌ Invalid query validation failed');
       return {
         query: 'invalid',
         results: [{
