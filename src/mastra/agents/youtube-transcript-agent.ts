@@ -3,7 +3,6 @@ import { Agent } from '@mastra/core/agent';
 import { Memory } from '@mastra/memory';
 import { LibSQLStore } from '@mastra/libsql';
 import { searchTranscriptsTool } from '../tools/search-transcripts';
-import { debugEnvironmentTool } from '../tools/debug-environment';
 
 // Configure memory storage
 const memory = new Memory({
@@ -35,6 +34,6 @@ When responding:
 
 IMPORTANT: Always call the searchTranscriptsTool for user queries about topics, concepts, or information requests.`,
   model: openai('gpt-4o'),
-  tools: { searchTranscriptsTool, debugEnvironmentTool },
+  tools: { searchTranscriptsTool },
   memory
 });

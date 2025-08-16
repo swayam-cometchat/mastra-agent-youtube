@@ -49,6 +49,33 @@ class ChromaVectorService {
       nResults: 5,
     });
   }
+
+  async vectorSearch(query, limit = 3) {
+    await this.initialize();
+    const response = await this.collection.query({
+      queryTexts: [query],
+      nResults: limit,
+    });
+    if (!response || !response.documents || response.documents.length === 0) {
+      return [];
+    }
+    const docs = response.documents[0] || [];
+    const metadatas = response.metadatas ? response.metadatas[0] : [];
+    const ids = response.ids ? response.ids[0] : [];
+    return docs.map((doc, i) => {
+      const meta = metadatas && metadatas[i] ? metadatas[i] : {};
+      const videoTitle = meta.videoTitle || meta.title || meta.name || 'Unknown Video';
+      const videoUrl = meta.videoUrl || meta.url || meta.link || '';
+      const timestamp = meta.timestamp || meta.time || meta.start || '';
+      return {
+        videoTitle,
+        transcript: doc || '',
+        timestamp,
+        videoUrl,
+        id: ids && ids[i] ? ids[i] : undefined
+      };
+    });
+  }
 }
 
 export default ChromaVectorService;
