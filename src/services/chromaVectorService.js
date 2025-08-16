@@ -1,5 +1,4 @@
-import { CloudClient } from "chromadb";
-import { DefaultEmbeddingFunction } from "@chroma-core/default-embed";
+import { CloudClient, OpenAIEmbeddingFunction } from "chromadb";
 
 class ChromaVectorService {
   constructor() {
@@ -22,10 +21,13 @@ class ChromaVectorService {
       console.log("✅ Using Local Chroma");
     }
 
+    const embedder = new OpenAIEmbeddingFunction({
+    openai_api_key: "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",
+    });
     // Create or connect to collection
     this.collection = await this.client.getOrCreateCollection({
       name: "youtube_transcripts_complete",
-      embeddingFunction: new DefaultEmbeddingFunction(),
+      embeddingFunction: embedder,
     });
 
     // 🔎 Debug logs
