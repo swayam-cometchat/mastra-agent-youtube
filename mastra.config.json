@@ -6,58 +6,16 @@
   "entrypoint": "src/mastra/index.ts",
   "environment": {
     "NODE_ENV": "production",
-    "PORT": 3000
+    "MASTRA_DEPLOYMENT": "true"
   },
   "secrets": [
     "YOUTUBE_API_KEY",
     "OPENAI_API_KEY",
-    "MASTRA_API_KEY",
-    "NGROK_AUTH_TOKEN"
-  ],
-  "endpoints": [
-    {
-      "path": "/health",
-      "method": "GET",
-      "description": "Health check endpoint"
-    },
-    {
-      "path": "/search",
-      "method": "POST",
-      "description": "Search playlist transcripts",
-      "parameters": {
-        "query": "string",
-        "playlistUrl": "string",
-        "options": "object"
-      }
-    },
-    {
-      "path": "/process-playlist",
-      "method": "POST", 
-      "description": "Process YouTube playlist",
-      "parameters": {
-        "playlistUrl": "string",
-        "options": "object"
-      }
-    },
-    {
-      "path": "/stats",
-      "method": "GET",
-      "description": "Get database statistics"
-    }
-  ],
-  "resources": {
-    "memory": "512MB",
-    "cpu": "0.5",
-    "storage": "1GB"
-  },
-  "networking": {
-    "allowExternalConnections": true,
-    "ngrokTunnel": true
-  },
-  "database": {
-    "type": "sqlite",
-    "path": "./data/transcript_vectors.db",
-    "backupEnabled": true,
-    "tunnelEnabled": true
-  }
+    "DATABASE_FILE_URL",
+    "DATABASE_URL",
+    "DATABASE_API_KEY",
+    "CHROMA_CLOUD_API_KEY",
+    "CHROMA_TENANT",
+    "CHROMA_DATABASE"
+  ]
 }
