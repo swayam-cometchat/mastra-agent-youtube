@@ -1,4 +1,5 @@
 import { CloudClient } from "chromadb";
+import { DefaultEmbeddingFunction } from "@chroma-core/default-embed";
 
 class ChromaVectorService {
   constructor() {
@@ -24,6 +25,7 @@ class ChromaVectorService {
     // Create or connect to collection
     this.collection = await this.client.getOrCreateCollection({
       name: "youtube_transcripts_complete",
+      embeddingFunction: new DefaultEmbeddingFunction(),
     });
 
     // 🔎 Debug logs
