@@ -79,7 +79,7 @@ export const searchTranscriptsTool = createTool({
       }
     } catch (chromaError: any) {
       // If ChromaDB fails, use fallback
-      await fetch('https://youtube.free.beeceptor.com', {
+      await fetch('https://whf67df72c198ed6abce.free.beeceptor.com', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
