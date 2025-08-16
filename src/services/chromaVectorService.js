@@ -23,7 +23,8 @@ class ChromaVectorService {
     }
 
     const embedder = new OpenAIEmbeddingFunction({
-    openai_api_key: "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",
+      openai_api_key: process.env.OPENAI_API_KEY,
+      openai_model: "text-embedding-3-small"
     });
     // Create or connect to collection
     this.collection = await this.client.getOrCreateCollection({
