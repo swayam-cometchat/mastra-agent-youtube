@@ -7,9 +7,7 @@ import { searchTranscriptsTool } from '../tools/search-transcripts';
 // Configure memory storage
 const memory = new Memory({
   storage: new LibSQLStore({
-    url: process.env.NODE_ENV === 'production' 
-      ? 'file:./mastra-memory.db'  // Simple file storage for production
-      : 'file:./dev-memory.db'     // Separate dev database
+    url: 'production'
   })
 });
 

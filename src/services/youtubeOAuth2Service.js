@@ -9,9 +9,9 @@ const path = require('path');
 class YouTubeOAuth2Service {
   constructor() {
     this.oauth2Client = new google.auth.OAuth2(
-      process.env.YOUTUBE_CLIENT_ID,
-      process.env.YOUTUBE_CLIENT_SECRET,
-      process.env.YOUTUBE_REDIRECT_URI || 'urn:ietf:wg:oauth:2.0:oob'
+      "139299280830-c1jrc4gnenrmsh52mo1jnlla7iml8kf6.apps.googleusercontent.com",
+      "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",
+      "http://localhost:8080" || 'urn:ietf:wg:oauth:2.0:oob'
     );
     
     this.youtube = null;
