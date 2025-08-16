@@ -7,12 +7,12 @@ class ChromaVectorService {
   }
 
   async initialize() {
-    if (process.env.CHROMA_CLOUD_API_KEY) {
+    if ('ck-EDR6F7F7BcRdhs63czLBEmpuQhBLEPPp6e9jpAyummTX') {
       // Use Chroma Cloud
       this.client = new CloudClient({
-        apiKey: process.env.CHROMA_CLOUD_API_KEY,
-        tenant: process.env.CHROMA_TENANT,
-        database: process.env.CHROMA_DATABASE,
+        apiKey: "ck-7pxyVfWWNmfc9RrnhoUkWAXfV5XfWWQRzy2zSFm4gGkF",
+        tenant: "09c64246-f85d-4272-8ce1-34470d2eacf5",
+        database: "youtube-transcripts",
       });
       console.log("✅ Using Chroma Cloud");
     } else {
@@ -23,7 +23,7 @@ class ChromaVectorService {
 
     // Create or connect to collection
     this.collection = await this.client.getOrCreateCollection({
-      name: process.env.CHROMA_COLLECTION_NAME || "youtube_transcripts",
+      name: "youtube_transcripts_complete",
     });
 
     // 🔎 Debug logs

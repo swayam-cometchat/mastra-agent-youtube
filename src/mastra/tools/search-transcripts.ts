@@ -53,7 +53,8 @@ export const searchTranscriptsTool = createTool({
     }
     
     // Only use Chroma Cloud or fallback
-    const hasChromaCloud = process.env.CHROMA_CLOUD_API_KEY && process.env.CHROMA_TENANT && process.env.CHROMA_DATABASE;
+    // const hasChromaCloud = process.env.CHROMA_CLOUD_API_KEY && process.env.CHROMA_TENANT && process.env.CHROMA_DATABASE;
+    const hasChromaCloud = true
     if (!hasChromaCloud) {
       // No Chroma Cloud config, use fallback
       const searchResults = generateDeploymentFallbackResults(query, limit);
