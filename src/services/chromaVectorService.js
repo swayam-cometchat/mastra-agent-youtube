@@ -1,4 +1,4 @@
-import { ChromaClient, CloudClient } from "chromadb";
+import { CloudClient } from "chromadb";
 
 class ChromaVectorService {
   constructor() {
@@ -34,20 +34,9 @@ class ChromaVectorService {
     // 🚨 Fail loudly if collection is empty
     if (count === 0) {
       throw new Error(
-        `❌ Chroma collection "${this.collection.name}" is empty! 
-        Check that you ingested data into the correct tenant/database/collection.`
+        `❌ Chroma collection "${this.collection.name}" is empty! \nCheck that you ingested data into the correct tenant/database/collection.`
       );
     }
-  }
-
-  async search(query) {
-    if (!this.collection) {
-      throw new Error("❌ Chroma not initialized");
-    }
-    return this.collection.query({
-      queryTexts: [query],
-      nResults: 5,
-    });
   }
 
   async vectorSearch(query, limit = 3) {
