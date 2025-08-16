@@ -29,6 +29,7 @@
     "@ai-sdk/cerebras": "^0.2.16",
     "@ai-sdk/openai": "^1.0.0",
     "@chroma-core/default-embed": "^0.1.8",
+    "@chroma-core/openai": "^0.1.7",
     "@mastra/core": "^0.13.2",
     "@mastra/libsql": "^0.13.2",
     "@mastra/memory": "^0.12.2",

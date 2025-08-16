@@ -1,4 +1,5 @@
-import { CloudClient, OpenAIEmbeddingFunction } from "chromadb";
+import { CloudClient } from "chromadb";
+import { OpenAIEmbeddingFunction } from "@chroma-core/openai";
 
 class ChromaVectorService {
   constructor() {
