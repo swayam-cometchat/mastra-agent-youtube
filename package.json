@@ -29,6 +29,7 @@
     "@ai-sdk/cerebras": "^0.2.16",
     "@ai-sdk/openai": "^1.0.0",
     "@chroma-core/default-embed": "^0.1.8",
+    "@chroma-core/openai": "^0.1.7",
     "@mastra/core": "^0.13.2",
     "@mastra/libsql": "^0.13.2",
     "@mastra/memory": "^0.12.2",
@@ -40,7 +41,6 @@
     "googleapis": "^155.0.1",
     "node-fetch": "^3.3.2",
     "openai": "^4.20.1",
-    "sqlite3": "^5.1.7",
     "uuid": "^9.0.1",
     "zod": "^3.25.76"
   },

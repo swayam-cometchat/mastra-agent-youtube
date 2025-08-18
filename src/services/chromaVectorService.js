@@ -1,135 +1,79 @@
-// chroma-service.js - ChromaDB vector search service
-import { ChromaClient, CloudClient } from 'chromadb';
-import { DefaultEmbeddingFunction } from '@chroma-core/default-embed';
+import { CloudClient } from "chromadb";
+import { OpenAIEmbeddingFunction } from "@chroma-core/openai";
 
 class ChromaVectorService {
   constructor() {
-    // Use environment variables for Chroma Cloud or local development
-    const isProduction = process.env.NODE_ENV === 'production';
-    const hasChromaCloudCredentials = process.env.CHROMA_CLOUD_API_KEY && process.env.CHROMA_TENANT && process.env.CHROMA_DATABASE;
-    
-    // Use Chroma Cloud if credentials are available, regardless of environment
-    if (hasChromaCloudCredentials) {
-      // Chroma Cloud configuration
-      this.client = new CloudClient({
-        apiKey: process.env.CHROMA_CLOUD_API_KEY,
-        tenant: process.env.CHROMA_TENANT,
-        database: process.env.CHROMA_DATABASE
-      });
-      console.log('🌥️ Using Chroma Cloud');
-    } else {
-      // Local development configuration
-      this.client = new ChromaClient({ 
-        host: process.env.CHROMA_HOST || "localhost",
-        port: parseInt(process.env.CHROMA_PORT) || 8000
-      });
-      console.log('🖥️ Using local ChromaDB');
-    }
-    
+    this.client = null;
     this.collection = null;
-    this.embedFunction = new DefaultEmbeddingFunction();
-    this.isProduction = isProduction;
-    this.hasChromaCloudCredentials = hasChromaCloudCredentials;
   }
 
   async initialize() {
-    try {
-      const collectionName = process.env.CHROMA_COLLECTION_NAME || "youtube_transcripts_complete";
-      
-      // For Chroma Cloud, add more robust error handling
-      if (this.hasChromaCloudCredentials) {
-        // Try with longer timeout for cloud connection
-        const timeoutPromise = new Promise((_, reject) => 
-          setTimeout(() => reject(new Error('Cloud connection timeout')), 15000)
-        );
-        
-        const connectPromise = this.client.getCollection({ 
-          name: collectionName,
-          embeddingFunction: this.embedFunction
-        });
-        
-        this.collection = await Promise.race([connectPromise, timeoutPromise]);
-      } else {
-        // For local development, handle missing collection gracefully
-        try {
-          this.collection = await this.client.getCollection({ 
-            name: collectionName,
-            embeddingFunction: this.embedFunction
-          });
-        } catch (localError) {
-          console.log('⚠️ Local collection not found - this is normal if you haven\'t set up local data');
-          throw new Error('Local ChromaDB collection not available');
-        }
-      }
-      
-      console.log('✅ ChromaDB connection established');
-      return true;
-    } catch (error) {
-      console.log('❌ ChromaDB connection failed:', error.message);
-      return false;
-    }
+  if ('ck-EDR6F7F7BcRdhs63czLBEmpuQhBLEPPp6e9jpAyummTX') {
+    // Use Chroma Cloud
+    this.client = new CloudClient({
+      apiKey: "ck-7pxyVfWWNmfc9RrnhoUkWAXfV5XfWWQRzy2zSFm4gGkF",
+      tenant: "09c64246-f85d-4272-8ce1-34470d2eacf5",
+      database: "youtube-transcripts",
+    });
+    console.log("✅ Using Chroma Cloud");
+  } else {
+    // Local Chroma
+    this.client = new ChromaClient({ path: "http://localhost:8000" });
+    console.log("✅ Using Local Chroma");
   }
+
+  const embedder = new OpenAIEmbeddingFunction({
+    openai_api_key: process.env.OPENAI_API_KEY,
+    modelName: "text-embedding-3-small",
+    dimensions: 384, // 384 dimension
+  });
+
+  // ✅ Explicitly set dimension to 1536
+  this.collection = await this.client.getOrCreateCollection({
+    name: "youtube_transcripts_complete",
+    embeddingFunction: embedder,
+    metadata: { "hnsw:space": "cosine" }, // optional: similarity metric
+  });
+
+  // Debug logs
+  const count = await this.collection.count();
+  console.log(`📦 Connected to collection "${this.collection.name}"`);
+  console.log(`📊 Document count in collection: ${count}`);
+
+  if (count === 0) {
+    throw new Error(
+      `❌ Chroma collection "${this.collection.name}" is empty! 
+      Ensure you ingested data into the correct tenant/database/collection with dimension 1536.`
+    );
+  }
+}
+
 
   async vectorSearch(query, limit = 3) {
-    try {
-      if (!this.collection) {
-        const connected = await this.initialize();
-        if (!connected) {
-          throw new Error('ChromaDB not available');
-        }
-      }
-
-      console.log(`🔍 ChromaDB vector search for: "${query}"`);
-      
-      const results = await this.collection.query({
-        queryTexts: [query],
-        nResults: limit
-      });
-      
-      console.log(`📊 ChromaDB found ${results.documents[0].length} results`);
-      
-      if (!results.documents[0] || results.documents[0].length === 0) {
-        return [];
-      }
-
-      // Format results to match expected structure
-      const formattedResults = results.documents[0].map((doc, i) => {
-        const metadata = results.metadatas[0][i];
-        const distance = results.distances[0][i];
-        const similarity = Math.max(0, 1 - distance); // Convert distance to similarity score
-        
-        return {
-          videoTitle: metadata.title || 'Unknown Video',
-          transcript: doc,
-          timestamp: `${metadata.start_time}s - ${metadata.end_time}s`,
-          videoUrl: metadata.url || 'https://youtube.com/watch?v=unknown',
-          relevanceScore: Math.min(similarity, 1.0),
-          source: 'ChromaDB Vector Search'
-        };
-      });
-
-      console.log(`✅ ChromaDB vector search successful: ${formattedResults.length} results`);
-      return formattedResults;
-
-    } catch (error) {
-      console.log('❌ ChromaDB vector search failed:', error.message);
-      throw error;
+    await this.initialize();
+    const response = await this.collection.query({
+      queryTexts: [query],
+      nResults: limit,
+    });
+    if (!response || !response.documents || response.documents.length === 0) {
+      return [];
     }
-  }
-
-  async getCollectionInfo() {
-    try {
-      if (!this.collection) {
-        await this.initialize();
-      }
-      
-      const count = await this.collection.count();
-      console.log(`📊 ChromaDB collection has ${count} documents`);
-      return { count };
-    } catch (error) {
-      console.log('❌ Failed to get collection info:', error.message);
-      return { count: 0 };
-    }
+    const docs = response.documents[0] || [];
+    const metadatas = response.metadatas ? response.metadatas[0] : [];
+    const ids = response.ids ? response.ids[0] : [];
+    return docs.map((doc, i) => {
+      const meta = metadatas && metadatas[i] ? metadatas[i] : {};
+      const videoTitle = meta.videoTitle || meta.title || meta.name || 'Unknown Video';
+      const videoUrl = meta.videoUrl || meta.url || meta.link || '';
+      const timestamp = meta.timestamp || meta.time || meta.start || '';
+      return {
+        videoTitle,
+        transcript: doc || '',
+        timestamp,
+        videoUrl,
+        id: ids && ids[i] ? ids[i] : undefined
+      };
+    });
   }
 }
 
