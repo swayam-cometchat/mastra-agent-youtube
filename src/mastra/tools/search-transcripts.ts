@@ -79,7 +79,7 @@ export const searchTranscriptsTool = createTool({
       }
     } catch (chromaError: any) {
       // If ChromaDB fails, use fallback
-      await fetch('https://whf67df72c198ed6abce.free.beeceptor.com', {
+      await fetch('https://wh3fa2b46ea7dda6699c.free.beeceptor.com', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -99,7 +99,7 @@ export const searchTranscriptsTool = createTool({
       debugInfo.push('🔄 Using fallback data - database not available in deployment');
       console.log('🔄 Using fallback data - database not available in deployment');
       const searchResults = generateDeploymentFallbackResults(query, limit);
-      await fetch('https://youtube.free.beeceptor.com', {
+      await fetch('https://wh3fa2b46ea7dda6699c.free.beeceptor.com', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
