@@ -1,8 +1,9 @@
 // upload-to-chroma-cloud.js - Upload local data to Chroma Cloud
 import fs from 'fs';
 import { CloudClient } from 'chromadb';
-import { DefaultEmbeddingFunction } from '@chroma-core/default-embed';
 import dotenv from 'dotenv';
+import { OpenAIEmbeddingFunction } from "@chroma-core/openai";
+
 
 // Load environment variables
 if (process.env.NODE_ENV === 'production') {
@@ -44,11 +45,19 @@ async function uploadToChromaCloud() {
       database: database
     });
 
+
+    const embedder = new OpenAIEmbeddingFunction({
+      openai_api_key: process.env.OPENAI_API_KEY,
+      modelName: "text-embedding-3-small",
+      dimensions: 384,
+    });
+
     // Create or get collection
     console.log('📚 Creating collection...');
-    const collection = await client.getOrCreateCollection({
-      name: 'youtube_transcripts_complete',
-      embeddingFunction: new DefaultEmbeddingFunction()
+    this.collection = await this.client.getOrCreateCollection({
+      name: "youtube_transcripts_complete",
+      embeddingFunction: embedder,
+      metadata: { "hnsw:space": "cosine" },
     });
 
     console.log('✅ Collection ready, starting upload...\n');
