@@ -1,3 +1,16 @@
+// === IMPORTANT: Production Upload Checklist ===
+// 1. Ensure you have pushed the latest code with:
+//    import { OpenAIEmbeddingFunction } from "@chroma-core/openai";
+//    and you pass the embedder to getOrCreateCollection.
+// 2. On your production server:
+//    a) Run: npm install @chroma-core/openai
+//    b) Ensure your .env.production (or .env) has all Chroma/OpenAI keys set.
+// 3. (Recommended) Clear the Chroma collection before uploading new data, to avoid mixed/invalid vectors.
+//    Use: node scripts/clear-chroma-collection.js
+// 4. Run this upload script in production:
+//    node upload-to-chroma-cloud.js
+// 5. If you see errors about embedding function, check your code, dependencies, and .env again.
+
 // upload-to-chroma-cloud.js - Upload local data to Chroma Cloud
 import fs from 'fs';
 import { CloudClient } from 'chromadb';

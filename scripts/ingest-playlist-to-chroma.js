@@ -2,6 +2,7 @@
 import dotenv from 'dotenv';
 dotenv.config();
 import { CloudClient } from 'chromadb';
+import { OpenAIEmbeddingFunction } from '@chroma-core/openai';
 import YouTubeApiService from '../src/services/youtubeApiService.js';
 import RealTranscriptService from '../src/services/realTranscriptService.js';
 
@@ -30,7 +31,17 @@ async function ingestPlaylist() {
     tenantId: CHROMA_TENANT,
     database: CHROMA_DATABASE,
   });
-  const collection = await client.getOrCreateCollection({ name: CHROMA_COLLECTION_NAME });
+  // Always use explicit OpenAI embedder
+  const embedder = new OpenAIEmbeddingFunction({
+    openai_api_key: process.env.OPENAI_API_KEY,
+    modelName: "text-embedding-3-small",
+    dimensions: 384,
+  });
+  const collection = await client.getOrCreateCollection({
+    name: CHROMA_COLLECTION_NAME,
+    embeddingFunction: embedder,
+    metadata: { "hnsw:space": "cosine" },
+  });
 
   // 1. Get all videos in playlist
   const playlistId = youtubeApi.extractPlaylistId(playlistUrl);
