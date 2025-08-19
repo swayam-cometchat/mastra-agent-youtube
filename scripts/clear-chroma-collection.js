@@ -1,6 +1,7 @@
 import dotenv from 'dotenv';
 dotenv.config();
 import { CloudClient } from 'chromadb';
+import { OpenAIEmbeddingFunction } from "@chroma-core/openai";
 
 const CHROMA_CLOUD_API_KEY = process.env.CHROMA_CLOUD_API_KEY;
 const CHROMA_TENANT = process.env.CHROMA_TENANT;
@@ -18,7 +19,16 @@ async function clearChromaCollection() {
     tenantId: CHROMA_TENANT,
     database: CHROMA_DATABASE,
   });
-  const collection = await client.getOrCreateCollection({ name: CHROMA_COLLECTION_NAME });
+const embedder = new OpenAIEmbeddingFunction({
+    openai_api_key: process.env.OPENAI_API_KEY,
+    modelName: "text-embedding-3-small",
+    dimensions: 384,
+  });
+  const collection = await client.getOrCreateCollection({
+    name: CHROMA_COLLECTION_NAME,
+    embeddingFunction: embedder,
+    metadata: { "hnsw:space": "cosine" },
+  });
   const count = await collection.count();
   if (count === 0) {
     console.log('✅ Collection is already empty.');
