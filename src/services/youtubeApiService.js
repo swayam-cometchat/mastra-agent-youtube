@@ -1,5 +1,5 @@
-const { google } = require('googleapis');
-const YouTubeOAuth2Service = require('./youtubeOAuth2Service');
+import { google } from 'googleapis';
+import YouTubeOAuth2Service from './youtubeOAuth2Service.js';
 
 class YouTubeApiService {
   constructor(apiKey) {
@@ -398,4 +398,4 @@ class YouTubeApiService {
   }
 }
 
-module.exports = YouTubeApiService;
+export default YouTubeApiService;

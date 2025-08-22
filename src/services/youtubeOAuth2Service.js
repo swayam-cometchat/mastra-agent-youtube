@@ -1,7 +1,13 @@
-require('dotenv').config();
-const { google } = require('googleapis');
-const fs = require('fs').promises;
-const path = require('path');
+import dotenv from 'dotenv';
+dotenv.config();
+import { google } from 'googleapis';
+import fs from 'fs/promises';
+import path from 'path';
+
+import { dirname } from 'path';
+import { fileURLToPath } from 'url';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
 /**
  * YouTube OAuth2 Service for accessing captions and other authenticated APIs
@@ -15,7 +21,7 @@ class YouTubeOAuth2Service {
     );
     
     this.youtube = null;
-    this.tokenPath = path.join(__dirname, '../../data/youtube_tokens.json');
+  this.tokenPath = path.join(__dirname, '../../data/youtube_tokens.json');
     this.isAuthenticated = false;
     this._initialized = false;
     
@@ -289,4 +295,4 @@ class YouTubeOAuth2Service {
   }
 }
 
-module.exports = YouTubeOAuth2Service;
+export default YouTubeOAuth2Service;

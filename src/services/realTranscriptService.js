@@ -1,8 +1,8 @@
-const { exec } = require('child_process');
-const util = require('util');
+import { exec } from 'child_process';
+import util from 'util';
 const execAsync = util.promisify(exec);
-const fs = require('fs').promises;
-const path = require('path');
+import fs from 'fs/promises';
+import path from 'path';
 
 class RealTranscriptService {
   constructor() {
@@ -85,14 +85,13 @@ class RealTranscriptService {
         if (lines.length >= 2 && lines[0].includes('-->')) {
           const timeLine = lines[0];
           const text = lines.slice(1).join(' ').trim();
-          
           if (text && !text.startsWith('WEBVTT') && !text.startsWith('NOTE')) {
             const startTime = this.parseVTTTime(timeLine.split(' --> ')[0]);
             const endTime = this.parseVTTTime(timeLine.split(' --> ')[1]);
-            
             segments.push({
               text: text.replace(/<[^>]*>/g, ''), // Remove HTML tags
               start: startTime,
+              end: endTime,
               duration: endTime - startTime,
               offset: startTime * 1000 // For compatibility
             });
@@ -112,10 +111,10 @@ class RealTranscriptService {
           if (text) {
             const startTime = this.parseSRTTime(timeLine.split(' --> ')[0]);
             const endTime = this.parseSRTTime(timeLine.split(' --> ')[1]);
-            
             segments.push({
               text: text.replace(/<[^>]*>/g, ''), // Remove HTML tags
               start: startTime,
+              end: endTime,
               duration: endTime - startTime,
               offset: startTime * 1000 // For compatibility
             });
@@ -158,4 +157,4 @@ class RealTranscriptService {
   }
 }
 
-module.exports = RealTranscriptService;
+export default RealTranscriptService;
