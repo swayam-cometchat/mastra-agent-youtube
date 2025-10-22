@@ -14,11 +14,17 @@ class ChromaVectorService {
       return this.collection;
     }
 
-    // Use Chroma Cloud (update with your env vars ideally)
+    // Use Chroma Cloud (load credentials from environment variables)
+    const apiKey = process.env.CHROMA_CLOUD_API_KEY;
+    const tenant = process.env.CHROMA_TENANT;
+    const database = process.env.CHROMA_DATABASE;
+    if (!apiKey || !tenant || !database) {
+      throw new Error('❌ Missing Chroma Cloud credentials in environment variables');
+    }
     this.client = new CloudClient({
-      apiKey: "ck-7pxyVfWWNmfc9RrnhoUkWAXfV5XfWWQRzy2zSFm4gGkF",
-      tenant: "09c64246-f85d-4272-8ce1-34470d2eacf5",
-      database: "youtube-transcripts",
+      apiKey,
+      tenant,
+      database,
     });
     console.log("✅ Using Chroma Cloud");
 
