@@ -14,17 +14,21 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
  */
 class YouTubeOAuth2Service {
   constructor() {
+    const clientId = process.env.YOUTUBE_CLIENT_ID;
+    const clientSecret = process.env.YOUTUBE_CLIENT_SECRET;
+    const redirectUri = process.env.YOUTUBE_REDIRECT_URI || 'urn:ietf:wg:oauth:2.0:oob';
+    if (!clientId || !clientSecret || !redirectUri) {
+      throw new Error('❌ Missing YouTube OAuth2 credentials in environment variables');
+    }
     this.oauth2Client = new google.auth.OAuth2(
-      "139299280830-c1jrc4gnenrmsh52mo1jnlla7iml8kf6.apps.googleusercontent.com",
-      "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",
-      "http://localhost:8080" || 'urn:ietf:wg:oauth:2.0:oob'
+      clientId,
+      clientSecret,
+      redirectUri
     );
-    
     this.youtube = null;
-  this.tokenPath = path.join(__dirname, '../../data/youtube_tokens.json');
+    this.tokenPath = path.join(__dirname, '../../data/youtube_tokens.json');
     this.isAuthenticated = false;
     this._initialized = false;
-    
     // Load existing tokens on initialization (async)
     this.loadTokens().then(() => {
       this._initialized = true;
